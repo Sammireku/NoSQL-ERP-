@@ -1,0 +1,148 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account profile and role configuration",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Unique identifier of the user"
+        },
+        "name": {
+          "type": "string",
+          "description": "Full display name"
+        },
+        "email": {
+          "type": "string",
+          "description": "Work email address"
+        },
+        "role": {
+          "type": "string",
+          "description": "Assigned access role"
+        },
+        "companyName": {
+          "type": "string",
+          "description": "Enterprise organization name"
+        },
+        "permissions": {
+          "type": "array",
+          "description": "Granular permissions list"
+        },
+        "pin": {
+          "type": "string",
+          "description": "4-digit terminal quick switch PIN"
+        },
+        "status": {
+          "type": "string",
+          "description": "Account status"
+        },
+        "onboardingCompleted": {
+          "type": "boolean",
+          "description": "Whether onboarding setup wizard was completed"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last updated timestamp"
+        }
+      },
+      "required": ["uid", "name", "email", "role"]
+    },
+    "Organization": {
+      "title": "Organization",
+      "description": "Enterprise organization settings and configuration",
+      "type": "object",
+      "properties": {
+        "orgId": {
+          "type": "string",
+          "description": "Organization unique ID"
+        },
+        "companyName": {
+          "type": "string",
+          "description": "Name of the organization"
+        },
+        "industry": {
+          "type": "string",
+          "description": "Primary industry"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Primary operating currency code"
+        },
+        "taxRate": {
+          "type": "number",
+          "description": "Default VAT / Tax percentage"
+        },
+        "onboardingStep": {
+          "type": "number",
+          "description": "Current onboarding progress step"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["orgId", "companyName"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Audit trail log of user actions",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique log record ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "ID of user performing action"
+        },
+        "userName": {
+          "type": "string",
+          "description": "Name of user"
+        },
+        "action": {
+          "type": "string",
+          "description": "Action type"
+        },
+        "target": {
+          "type": "string",
+          "description": "Target entity or feature"
+        },
+        "details": {
+          "type": "string",
+          "description": "Detailed log narrative"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Event timestamp"
+        }
+      },
+      "required": ["id", "userId", "action"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "User profiles and credentials"
+    },
+    "/organizations/{orgId}": {
+      "schema": {
+        "$ref": "#/entities/Organization"
+      },
+      "description": "Organization multi-tenant configurations"
+    },
+    "/audit_logs/{logId}": {
+      "schema": {
+        "$ref": "#/entities/AuditLog"
+      },
+      "description": "Immutable system event log"
+    }
+  }
+}

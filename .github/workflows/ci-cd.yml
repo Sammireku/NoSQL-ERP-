@@ -1,0 +1,86 @@
+# ==============================================================================
+# Enterprise SaaS ERP CI/CD Automated Build, Test, and Deploy Pipeline
+# ==============================================================================
+name: Automated CI/CD SaaS Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test_and_verify_security:
+    name: 🛡️ Security Rules Test (Mocha via Local Emulator)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Project Dependencies
+        run: npm ci
+
+      - name: Install Firebase Local Emulator Java Runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y default-jr
+
+      - name: Set up Firestore Rules Emulators & Run Mocha Suite
+        run: |
+          chmod +x tests/run-emulator-tests.sh
+          ./tests/run-emulator-tests.sh
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+  build_and_deploy_saas:
+    name: 🚀 Build Frontend & Deploy Firebase Ecosystem
+    needs: test_and_verify_security
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Next.js / Vite Static Frontend Assets
+        run: npm run build
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+
+      - name: Install Firebase Tools Global Utility
+        run: npm install -g firebase-tools
+
+      - name: Deploy Firestore Rules and Custom Index Schemas
+        run: firebase deploy --only firestore:rules,firestore:indexes --token "${{ secrets.FIREBASE_TOKEN }}"
+
+      - name: Deploy Cloud Storage Bucket Policies
+        run: firebase deploy --only storage --token "${{ secrets.FIREBASE_TOKEN }}"
+
+      - name: Deploy Secure Firebase Cloud Functions (Python & Node.js engines)
+        run: firebase deploy --only functions --token "${{ secrets.FIREBASE_TOKEN }}"
+
+      - name: Deploy Production Application Web Server to Firebase Hosting
+        run: firebase deploy --only hosting --token "${{ secrets.FIREBASE_TOKEN }}"

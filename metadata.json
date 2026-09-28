@@ -1,0 +1,6 @@
+{
+  "name": "Tumi ERP",
+  "description": "Next-generation full-stack Enterprise ERP with POS Register, AI Ingestion & Procurement, Hospitality & Lodging Management, Multi-Currency (GHS/USD), Multi-Role Access Control, and Real-Time Analytics.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
