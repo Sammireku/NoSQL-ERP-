@@ -4,11 +4,34 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tumi ERP</title>
-    <meta name="description" content="Comprehensive Enterprise ERP with System Admin Console, Authentication, Team Management & Role-Based Access Control" />
+    <meta name="description" content="Next-generation full-stack Enterprise ERP with POS Register, AI Ingestion & Procurement, Hospitality & Lodging Management, Multi-Currency (GHS/USD), Multi-Role Access Control, and Real-Time Analytics." />
     <meta property="og:title" content="Tumi ERP" />
-    <meta property="og:description" content="Comprehensive Enterprise ERP with System Admin Console, Authentication, Team Management & Role-Based Access Control" />
+    <meta property="og:description" content="Next-generation full-stack Enterprise ERP with POS Register, AI Ingestion & Procurement, Hospitality & Lodging Management, Multi-Currency (GHS/USD), Multi-Role Access Control, and Real-Time Analytics." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+    <script>
+      // Gracefully prevent injected browser extensions (e.g. MetaMask inpage provider) from throwing unhandled errors in sandboxed preview iframes
+      window.addEventListener('unhandledrejection', function(event) {
+        var reason = event.reason;
+        if (reason) {
+          var text = typeof reason === 'string' ? reason : (reason.message || '') + (reason.stack || '');
+          if (text.indexOf('MetaMask') !== -1 || text.indexOf('nkbihfbeogaeaoehlefnkodbefgpgknn') !== -1 || text.indexOf('chrome-extension://') !== -1) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }
+      }, true);
+
+      window.addEventListener('error', function(event) {
+        var src = (event.filename || '') + (event.message || '');
+        if (event.error && event.error.stack) src += event.error.stack;
+        if (src.indexOf('MetaMask') !== -1 || src.indexOf('nkbihfbeogaeaoehlefnkodbefgpgknn') !== -1 || src.indexOf('chrome-extension://') !== -1) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          return true;
+        }
+      }, true);
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -24,11 +24,13 @@ export interface PDFReportData {
 }
 
 export function generateExecutiveSalesPDF(data: PDFReportData) {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert("Please allow popups to open and print/save the Executive PDF Report.");
-    return;
-  }
+  try {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      console.warn("Popup blocked when opening sales report. Falling back to direct print.");
+      window.print();
+      return;
+    }
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -227,6 +229,10 @@ export function generateExecutiveSalesPDF(data: PDFReportData) {
     </html>
   `;
 
-  printWindow.document.write(htmlContent);
-  printWindow.document.close();
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  } catch (err) {
+    console.warn("Direct window write failed in iframe, falling back to window.print():", err);
+    window.print();
+  }
 }

@@ -27,7 +27,9 @@ import {
   Product, 
   InventoryLevel, 
   POSOrder, 
-  DonorGrant 
+  DonorGrant,
+  Opportunity,
+  CustomerProfile
 } from '../types/erp';
 import FinancialOverviewTab from './accounting/FinancialOverviewTab';
 import ChartOfAccountsTab from './accounting/ChartOfAccountsTab';
@@ -52,6 +54,8 @@ export default function FinancialLedger({ activeUser }: { activeUser: UserProfil
   const [products, setProducts] = useState<Product[]>(() => dataStore.getProducts());
   const [inventory, setInventory] = useState<InventoryLevel[]>(() => dataStore.getInventory());
   const [orders, setOrders] = useState<POSOrder[]>(() => dataStore.getOrders());
+  const [deals, setDeals] = useState<Opportunity[]>(() => dataStore.getOpportunities());
+  const [customers, setCustomers] = useState<CustomerProfile[]>(() => dataStore.getCustomers());
   const [doubleEntry, setDoubleEntry] = useState<any[]>(() => dataStore.getDoubleEntry());
   const [grants, setGrants] = useState<DonorGrant[]>(() => dataStore.getGrants());
 
@@ -72,6 +76,8 @@ export default function FinancialLedger({ activeUser }: { activeUser: UserProfil
     setProducts(dataStore.getProducts());
     setInventory(dataStore.getInventory());
     setOrders(dataStore.getOrders());
+    setDeals(dataStore.getOpportunities());
+    setCustomers(dataStore.getCustomers());
     setDoubleEntry(dataStore.getDoubleEntry());
     setGrants(dataStore.getGrants());
 
@@ -81,10 +87,18 @@ export default function FinancialLedger({ activeUser }: { activeUser: UserProfil
     const unsubOrders = dataStore.subscribeToCollection('orders', () => {
       setOrders(dataStore.getOrders());
     });
+    const unsubDeals = dataStore.subscribeToCollection('opportunities', () => {
+      setDeals(dataStore.getOpportunities());
+    });
+    const unsubCustomers = dataStore.subscribeToCollection('customers', () => {
+      setCustomers(dataStore.getCustomers());
+    });
 
     return () => {
       unsubDouble();
       unsubOrders();
+      unsubDeals();
+      unsubCustomers();
     };
   }, []);
 
@@ -256,7 +270,7 @@ export default function FinancialLedger({ activeUser }: { activeUser: UserProfil
             { id: 'cashflow', label: 'Cash Flows', icon: DollarSign },
             { id: 'loans', label: 'Microfinance & Staff Loans', icon: ArrowRightLeft },
             { id: 'wave-receipts', label: 'Wave Receipts & OCR', icon: Receipt },
-            { id: 'receipt-lookup', label: 'Receipts & Sales Finder', icon: Search },
+            { id: 'receipt-lookup', label: 'Invoices & PDF Generator', icon: FileText },
             { id: 'assets', label: 'Fixed Assets', icon: Building },
             { id: 'inventory', label: 'Inventory Costing', icon: Package },
             { id: 'journal', label: 'General Journal', icon: BookOpen },
@@ -338,7 +352,12 @@ export default function FinancialLedger({ activeUser }: { activeUser: UserProfil
       )}
 
       {subTab === 'receipt-lookup' && (
-        <ReceiptLookupInterface orders={orders} />
+        <ReceiptLookupInterface 
+          orders={orders} 
+          deals={deals} 
+          customers={customers} 
+          activeUser={activeUser} 
+        />
       )}
 
       {subTab === 'assets' && (

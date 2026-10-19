@@ -58,6 +58,7 @@ import DataImportModule from './DataImportModule';
 import ExternalAPIIntegrationsHub from './ExternalAPIIntegrationsHub';
 import InHouseMessagingModule from './InHouseMessagingModule';
 import EditRoomTagsModal from './EditRoomTagsModal';
+import ExtendStayModal from './hospitality/ExtendStayModal';
 import { currencyStore, RoomBookingRateConfig } from '../utils/currencyStore';
 
 interface HospitalityChannelManagerProps {
@@ -4469,183 +4470,66 @@ export default function HospitalityChannelManager({ activeUser }: HospitalityCha
 
       {/* EXTEND STAY / PROLONG RESERVATION MODAL */}
       {showExtendStayModal && extendingBooking && (
-        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-scale-up">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center space-x-2.5">
-                <div className="p-2.5 bg-indigo-100 text-indigo-700 rounded-2xl">
-                  <CalendarDays className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-slate-900">
-                    Extend Guest Stay / Prolong Reservation
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Room #{extendingBooking.roomNumber} • Guest: {extendingBooking.guestName}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowExtendStayModal(false);
-                  setExtendingBooking(null);
-                }}
-                className="text-slate-400 hover:text-slate-600 font-bold p-1"
-              >
-                ✕
-              </button>
-            </div>
+        <ExtendStayModal
+          booking={extendingBooking}
+          room={rooms.find(r => r.id === extendingBooking.roomId || r.number === extendingBooking.roomNumber) || null}
+          onConfirmExtend={(params) => {
+            const selectedRoom = rooms.find(r => r.id === extendingBooking.roomId || r.number === extendingBooking.roomNumber) || rooms[0];
+            const newTotalPrice = Number((extendingBooking.totalPrice + params.additionalCost).toFixed(2));
 
-            {/* Current Stay & Rate Summary */}
-            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2 text-xs font-mono">
-              <div className="flex justify-between text-slate-600">
-                <span>Current Check-In Date:</span>
-                <span className="font-bold text-slate-900">{extendingBooking.checkInDate}</span>
-              </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Current Check-Out Date:</span>
-                <span className="font-bold text-indigo-700">{extendingBooking.checkOutDate}</span>
-              </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Nightly Room Rate:</span>
-                <span className="font-bold text-slate-900">
-                  ${rooms.find(r => r.id === extendingBooking.roomId || r.number === extendingBooking.roomNumber)?.nightlyRate || 100} / night
-                </span>
-              </div>
-              <div className="flex justify-between text-slate-600 pt-1 border-t border-slate-200">
-                <span>Current Booking Total:</span>
-                <span className="font-bold text-slate-900">${extendingBooking.totalPrice.toFixed(2)}</span>
-              </div>
-            </div>
+            const extensionRecord = {
+              extendedAt: new Date().toISOString(),
+              previousCheckOutDate: extendingBooking.checkOutDate,
+              newCheckOutDate: params.newCheckOutDate,
+              additionalNights: params.additionalNights,
+              additionalAmount: params.additionalCost,
+              paymentMode: params.billingType,
+              onlineReceiptNumber: params.onlineReceiptNumber
+            };
 
-            <form onSubmit={handleConfirmExtendStay} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  New Extended Check-Out Date *
-                </label>
-                <input
-                  type="date"
-                  min={extendingBooking.checkOutDate}
-                  value={extendNewCheckOutDate}
-                  onChange={(e) => setExtendNewCheckOutDate(e.target.value)}
-                  className="w-full text-xs p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900"
-                  required
-                />
-              </div>
+            let updatedPaymentStatus = extendingBooking.paymentStatus;
+            let updatedAmountPaid = extendingBooking.amountPaid || (extendingBooking.paymentStatus === 'paid' ? extendingBooking.totalPrice : 0);
 
-              {/* Calculated Additional Stay Breakdown */}
-              {extendNewCheckOutDate && new Date(extendNewCheckOutDate) > new Date(extendingBooking.checkOutDate) && (
-                <div className="p-3 bg-indigo-50/70 border border-indigo-200 rounded-xl text-xs space-y-1.5 font-mono">
-                  <div className="flex justify-between text-indigo-900 font-bold">
-                    <span>Additional Extension Nights:</span>
-                    <span>
-                      +{Math.max(1, Math.round((new Date(extendNewCheckOutDate).getTime() - new Date(extendingBooking.checkOutDate).getTime()) / (1000 * 3600 * 24)))} night(s)
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-indigo-900 font-extrabold text-sm pt-1 border-t border-indigo-200">
-                    <span>Additional Stay Charge Due:</span>
-                    <span className="text-indigo-700">
-                      +${(
-                        Math.max(1, Math.round((new Date(extendNewCheckOutDate).getTime() - new Date(extendingBooking.checkOutDate).getTime()) / (1000 * 3600 * 24))) *
-                        (rooms.find(r => r.id === extendingBooking.roomId || r.number === extendingBooking.roomNumber)?.nightlyRate || 100)
-                      ).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              )}
+            if (params.billingType === 'online_receipt') {
+              updatedAmountPaid += params.additionalCost;
+              updatedPaymentStatus = 'paid';
+            } else if (params.billingType === 'bill_to_individual') {
+              if (updatedPaymentStatus === 'paid') updatedPaymentStatus = 'partially_paid';
+              dataStore.addRoomCharge(extendingBooking.id, {
+                category: 'Room Stay Extension',
+                description: `Extended stay by +${params.additionalNights} night(s) to ${params.newCheckOutDate} - Bill to Individual`,
+                amount: params.additionalCost,
+                billedBy: activeUser.name
+              }, activeUser.name);
+            }
 
-              {/* Extended Stay Payment Routing */}
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
-                <label className="block text-[11px] font-extrabold text-slate-800 uppercase tracking-wider">
-                  Payment / Billing Method for Extended Stay *
-                </label>
-                <div className="space-y-1.5">
-                  <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-white border border-slate-200 hover:border-indigo-400">
-                    <input
-                      type="radio"
-                      name="extendBillingType"
-                      value="pay_now_pos"
-                      checked={extendBillingType === 'pay_now_pos'}
-                      onChange={() => setExtendBillingType('pay_now_pos')}
-                      className="text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <div>
-                      <span className="font-bold text-slate-800">💳 Send Extension Charge to POS</span>
-                      <p className="text-[10px] text-slate-500">Collect payment immediately at POS register (Cash, Card, MoMo)</p>
-                    </div>
-                  </label>
+            const updatedBooking: Booking = {
+              ...extendingBooking,
+              checkOutDate: params.newCheckOutDate,
+              totalPrice: newTotalPrice,
+              amountPaid: updatedAmountPaid,
+              paymentStatus: updatedPaymentStatus,
+              onlineReceiptNumber: params.onlineReceiptNumber || extendingBooking.onlineReceiptNumber,
+              extendedStayHistory: [...(extendingBooking.extendedStayHistory || []), extensionRecord]
+            };
 
-                  <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-white border border-slate-200 hover:border-indigo-400">
-                    <input
-                      type="radio"
-                      name="extendBillingType"
-                      value="online_receipt"
-                      checked={extendBillingType === 'online_receipt'}
-                      onChange={() => setExtendBillingType('online_receipt')}
-                      className="text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <div>
-                      <span className="font-bold text-slate-800">🌐 Record Online Extension Payment</span>
-                      <p className="text-[10px] text-slate-500">Attach online receipt/transaction reference number</p>
-                    </div>
-                  </label>
+            const currentBookings = dataStore.getBookings();
+            const updatedBookings = currentBookings.map(b => b.id === extendingBooking.id ? updatedBooking : b);
+            dataStore.saveBookings(updatedBookings);
+            setBookings(updatedBookings);
 
-                  <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-white border border-slate-200 hover:border-indigo-400">
-                    <input
-                      type="radio"
-                      name="extendBillingType"
-                      value="bill_to_individual"
-                      checked={extendBillingType === 'bill_to_individual'}
-                      onChange={() => setExtendBillingType('bill_to_individual')}
-                      className="text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <div>
-                      <span className="font-bold text-slate-800">👤 Bill Extension to Guest Folio (Pay on Checkout)</span>
-                      <p className="text-[10px] text-slate-500">Add extension charge to guest folio balance due for checkout</p>
-                    </div>
-                  </label>
-                </div>
+            if (selectedFolioBooking?.id === extendingBooking.id) {
+              setSelectedFolioBooking(updatedBooking);
+            }
 
-                {extendBillingType === 'online_receipt' && (
-                  <div className="pt-2">
-                    <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">
-                      Online Receipt Number / Tx Ref *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. EXT-PAYSTACK-88120"
-                      value={extendOnlineReceiptNumber}
-                      onChange={(e) => setExtendOnlineReceiptNumber(e.target.value)}
-                      className="w-full text-xs p-2 bg-white border border-indigo-300 rounded-lg font-mono font-bold"
-                      required
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowExtendStayModal(false);
-                    setExtendingBooking(null);
-                  }}
-                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md flex items-center gap-1.5"
-                >
-                  <CalendarDays className="w-4 h-4 text-indigo-200" />
-                  <span>Confirm Extend Stay</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            setShowExtendStayModal(false);
+            setExtendingBooking(null);
+          }}
+          onClose={() => {
+            setShowExtendStayModal(false);
+            setExtendingBooking(null);
+          }}
+        />
       )}
 
       {/* AUTOMATED CHECKOUT EMAIL PDF INVOICE DISPATCH MODAL */}

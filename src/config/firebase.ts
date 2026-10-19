@@ -11,6 +11,7 @@ import {
   onAuthStateChanged
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { safeLocalStorageSet, safeLocalStorageGet } from '../utils/indexedDBStore';
 import firebaseConfig from '../firebase-applet-config.json';
 import { 
   UserProfile, 
@@ -851,7 +852,7 @@ function loadLocalStore<T>(key: string, defaultVal: T[]): T[] {
 }
 
 function saveLocalStore<T>(key: string, data: T[]) {
-  localStorage.setItem(key, JSON.stringify(data));
+  safeLocalStorageSet(key, data);
   triggerCallbacks(key);
 }
 

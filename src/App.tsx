@@ -55,6 +55,7 @@ import SystemModuleBuilder from './components/SystemModuleBuilder';
 import HospitalityChannelManager from './components/HospitalityChannelManager';
 import OnboardingWizard from './components/OnboardingWizard';
 import AppWalkthroughGuide from './components/AppWalkthroughGuide';
+import GuidedSpotlightTour from './components/GuidedSpotlightTour';
 import FloatingMessagingWidget from './components/FloatingMessagingWidget';
 import TaskManagerModule from './components/TaskManagerModule';
 import MobileAppHub from './components/MobileAppHub';
@@ -344,6 +345,7 @@ export default function App() {
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isWalkthroughOpen, setIsWalkthroughOpen] = useState(false);
+  const [spotlightTab, setSpotlightTab] = useState<string | null>(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
@@ -558,13 +560,14 @@ export default function App() {
                     <span>Setup Wizard</span>
                   </button>
 
-                  {/* Guide Button */}
+                  {/* Interactive Help & Guide Button */}
                   <button
                     onClick={() => setIsWalkthroughOpen(true)}
-                    className="hidden sm:flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs py-1 px-2.5 rounded-lg font-medium border border-slate-200 transition-all"
+                    className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs py-1.5 px-3 rounded-xl font-extrabold shadow-sm transition-all cursor-pointer"
+                    title="Open Step-by-Step Walkthrough, Tutorials & Ask AI Help"
                   >
-                    <BookOpen className="w-3 h-3 text-slate-500" />
-                    <span>Guide</span>
+                    <BookOpen className="w-3.5 h-3.5 text-amber-100" />
+                    <span>Help & Guide</span>
                   </button>
 
                   {/* Switch PIN / Account Button */}
@@ -1213,10 +1216,24 @@ export default function App() {
                 setActiveTab(tabId as any);
                 setIsWalkthroughOpen(false);
               }}
+              onStartSpotlightTour={(tabId) => {
+                setActiveTab(tabId as any);
+                setSpotlightTab(tabId);
+                setIsWalkthroughOpen(false);
+              }}
               onClose={() => setIsWalkthroughOpen(false)}
             />
           </div>
         </div>
+      )}
+
+      {/* Guided On-Screen Spotlight Tour Overlay */}
+      {spotlightTab && (
+        <GuidedSpotlightTour
+          tabId={spotlightTab}
+          onNavigateToTab={(tabId) => setActiveTab(tabId as any)}
+          onClose={() => setSpotlightTab(null)}
+        />
       )}
 
       {/* Onboarding Setup Wizard Overlay */}

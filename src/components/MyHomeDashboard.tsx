@@ -52,7 +52,8 @@ import {
   Download,
   AlertCircle,
   Check,
-  RotateCcw
+  RotateCcw,
+  Layers
 } from 'lucide-react';
 import { UserProfile, ERPModuleConfig, POSOrder, TaskItem, Opportunity, TaskStatus } from '../types/erp';
 import { dataStore } from '../config/firebase';
@@ -69,6 +70,9 @@ import {
   ensureSeedOrdersAndReturns
 } from '../utils/dashboardSeedStore';
 import { formatPrice } from '../utils/currency';
+import KPIHeatmapVisualization from './KPIHeatmapVisualization';
+import CurrencyConversionWidget from './dashboard/CurrencyConversionWidget';
+import { Flame } from 'lucide-react';
 
 interface MyHomeDashboardProps {
   activeUser: UserProfile;
@@ -79,6 +83,7 @@ interface MyHomeDashboardProps {
 }
 
 const ALL_AVAILABLE_WIDGETS = [
+  { id: 'kpi_heatmap', name: 'Executive Real-Time KPI Heatmap', desc: 'At-a-glance multidimensional performance intensity matrix across departments for CEOs & Managers', icon: Flame },
   { id: 'sales', name: 'Sales Channel KPI Matrix', desc: 'Consolidated POS checkouts & WooCommerce online store sync', icon: TrendingUp },
   { id: 'cashflow', name: 'Financial Cash Flow Ledger', desc: 'Real-time revenue, expenses & petty cash ledger balance', icon: DollarSign },
   { id: 'student_staff_mgmt', name: 'Student & Staff Master Database Hub', desc: 'Unified database hub to register, view, edit and delete trainees and employees', icon: UserCheck },
@@ -115,8 +120,12 @@ export default function MyHomeDashboard({
   // Widget Customizer selections (Saved in localStorage)
   const [selectedWidgets, setSelectedWidgets] = useState<string[]>(() => {
     const saved = localStorage.getItem('erp_desktop_widgets');
-    return saved ? JSON.parse(saved) : ['sales', 'cashflow', 'student_staff_mgmt', 'quick_actions', 'currency', 'stock', 'tasks', 'crm', 'audit'];
+    return saved ? JSON.parse(saved) : ['kpi_heatmap', 'sales', 'cashflow', 'student_staff_mgmt', 'quick_actions', 'currency', 'stock', 'tasks', 'crm', 'audit'];
   });
+
+  // Top-Level KPI Heatmap Global Filters
+  const [heatmapTimeHorizon, setHeatmapTimeHorizon] = useState<'today' | 'week' | 'month' | 'quarter'>('month');
+  const [heatmapCategory, setHeatmapCategory] = useState<string>('all');
 
   const [showConfigPanel, setShowConfigPanel] = useState(false);
   const [recentOrders, setRecentOrders] = useState<POSOrder[]>([]);
@@ -876,6 +885,57 @@ export default function MyHomeDashboard({
             </div>
           </div>
 
+          {/* TOP-LEVEL EXECUTIVE HEATMAP GLOBAL FILTER CONTROL BAR */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-white">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-indigo-600/30 text-indigo-400 rounded-xl border border-indigo-500/30">
+                <Filter className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm text-white tracking-tight">Executive Dashboard Filters</h3>
+                <p className="text-[11px] text-slate-400">Toggle time-range and sector category to filter KPI heatmap data across all departments.</p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Time Range Filter Dropdown */}
+              <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+                <Clock className="w-3.5 h-3.5 text-indigo-400" />
+                <span className="text-[11px] text-slate-400 font-bold uppercase">Time Range:</span>
+                <select
+                  value={heatmapTimeHorizon}
+                  onChange={(e) => setHeatmapTimeHorizon(e.target.value as any)}
+                  className="bg-transparent text-white font-bold text-xs focus:outline-none cursor-pointer"
+                >
+                  <option value="today" className="bg-slate-900 text-white">Daily View (Today)</option>
+                  <option value="week" className="bg-slate-900 text-white">Weekly View (This Week)</option>
+                  <option value="month" className="bg-slate-900 text-white">Monthly View (This Month)</option>
+                  <option value="quarter" className="bg-slate-900 text-white">Quarterly View (Q3)</option>
+                </select>
+              </div>
+
+              {/* Category / Sector Filter Dropdown */}
+              <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+                <Layers className="w-3.5 h-3.5 text-purple-400" />
+                <span className="text-[11px] text-slate-400 font-bold uppercase">Category:</span>
+                <select
+                  value={heatmapCategory}
+                  onChange={(e) => setHeatmapCategory(e.target.value)}
+                  className="bg-transparent text-white font-bold text-xs focus:outline-none cursor-pointer max-w-[200px]"
+                >
+                  <option value="all" className="bg-slate-900 text-white">All Categories (Full Matrix)</option>
+                  <option value="sales" className="bg-slate-900 text-white">Sales & POS Retail</option>
+                  <option value="hospitality" className="bg-slate-900 text-white">Hospitality & Lodging</option>
+                  <option value="inventory" className="bg-slate-900 text-white">Inventory & Warehouse</option>
+                  <option value="finance" className="bg-slate-900 text-white">Finance & Cashflow</option>
+                  <option value="hr" className="bg-slate-900 text-white">HR & Workforce</option>
+                  <option value="crm" className="bg-slate-900 text-white">CRM & Growth Pipeline</option>
+                  <option value="compliance" className="bg-slate-900 text-white">System Governance & Audit</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
           {/* Quick Config Slide-out Widget selection panel */}
           {showConfigPanel && (
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4 animate-fade-in text-xs">
@@ -924,6 +984,18 @@ export default function MyHomeDashboard({
 
           {/* Dynamic Grid Layout containing Selected Widgets */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
+
+            {/* EXECUTIVE REAL-TIME KPI HEATMAP VISUALIZATION WIDGET (12 Columns Full Width) */}
+            {selectedWidgets.includes('kpi_heatmap') && (
+              <div className="lg:col-span-12">
+                <KPIHeatmapVisualization 
+                  activeUser={activeUser}
+                  onNavigateToTab={onNavigateToTab}
+                  timeHorizonProp={heatmapTimeHorizon}
+                  selectedDeptProp={heatmapCategory}
+                />
+              </div>
+            )}
 
             {/* UNIFIED STUDENT & STAFF MASTER DATABASE WIDGET (12 Columns Full Width) */}
             {selectedWidgets.includes('student_staff_mgmt') && (
@@ -1909,73 +1981,8 @@ export default function MyHomeDashboard({
 
             {/* --- CURRENCY CONVERSION MATRIX WIDGET (6 Columns) --- */}
             {selectedWidgets.includes('currency') && (
-              <div className="lg:col-span-6 bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
-                  <div>
-                    <h3 className="font-bold text-xs text-slate-800 uppercase tracking-wider flex items-center gap-1.5 text-slate-800">
-                      <Coins className="w-4 h-4 text-indigo-600" /> Currency Conversion Matrix
-                    </h3>
-                    <p className="text-[10px] text-slate-400 mt-0.5">Live buying & selling rates for USD, GBP, and EUR to GHS</p>
-                  </div>
-                  <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold">
-                    Base: GHS
-                  </span>
-                </div>
-
-                {/* Filters / Calculator for Currency */}
-                <div className="flex flex-wrap items-center gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs">
-                  <div className="flex items-center gap-1.5 flex-1 min-w-[120px]">
-                    <span className="text-[11px] font-bold text-slate-500">Amount:</span>
-                    <input
-                      type="number"
-                      value={calcAmount}
-                      onChange={e => setCalcAmount(e.target.value)}
-                      className="w-20 px-2 py-1 bg-white border border-slate-200 rounded-lg font-mono font-bold text-xs"
-                    />
-                  </div>
-
-                  <select
-                    value={calcCurrency}
-                    onChange={e => setCalcCurrency(e.target.value)}
-                    className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700"
-                  >
-                    {rates.map(r => (
-                      <option key={r.currency} value={r.currency}>{r.currency} ({r.name})</option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={calcDirection}
-                    onChange={e => setCalcDirection(e.target.value as any)}
-                    className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700"
-                  >
-                    <option value="buy">Bank Buy Rate</option>
-                    <option value="sell">Bank Sell Rate</option>
-                  </select>
-                </div>
-
-                {/* Conversion Result */}
-                {(() => {
-                  const targetRate = rates.find(r => r.currency === calcCurrency);
-                  const rateVal = targetRate ? (calcDirection === 'buy' ? targetRate.buyingRate : targetRate.sellingRate) : 15.0;
-                  const amt = parseFloat(calcAmount) || 0;
-                  const converted = Number((amt * rateVal).toFixed(2));
-                  return (
-                    <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl flex items-center justify-between text-xs">
-                      <div>
-                        <span className="text-[10px] text-indigo-600 font-bold uppercase block">
-                          {calcAmount} {calcCurrency} @ {rateVal} GHS
-                        </span>
-                        <span className="text-xl font-black text-indigo-950 font-mono">
-                          GH₵ {converted.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                        </span>
-                      </div>
-                      <span className="text-[10px] bg-white border border-indigo-200 text-indigo-700 font-bold px-2 py-1 rounded-lg">
-                        {calcDirection.toUpperCase()} RATE
-                      </span>
-                    </div>
-                  );
-                })()}
+              <div className="lg:col-span-6">
+                <CurrencyConversionWidget rates={rates} onRatesUpdated={(newRates) => setRates(newRates)} />
               </div>
             )}
 

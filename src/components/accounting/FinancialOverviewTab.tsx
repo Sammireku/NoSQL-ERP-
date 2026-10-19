@@ -10,7 +10,8 @@ import {
   ArrowDownRight,
   Wallet,
   Scale,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Receipt
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -115,6 +116,13 @@ export default function FinancialOverviewTab({
           >
             <Scale className="w-3.5 h-3.5" />
             <span>Chart of Accounts</span>
+          </button>
+          <button
+            onClick={() => onNavigateTab('receipt-lookup')}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-xs font-semibold transition-all"
+          >
+            <Receipt className="w-3.5 h-3.5 text-amber-600" />
+            <span>Generate Invoices</span>
           </button>
           <button
             onClick={() => onNavigateTab('reports')}

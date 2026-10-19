@@ -20,7 +20,8 @@ import {
   Sliders
 } from 'lucide-react';
 import { dataStore } from '../config/firebase';
-import { CompanyTaxConfig, ReceiptTemplateConfig, DashboardWidgetConfig, UserProfile } from '../types/erp';
+import { CompanyTaxConfig, ReceiptTemplateConfig, DashboardWidgetConfig, UserProfile, POSOrder } from '../types/erp';
+import { downloadFinancialInvoicePDF } from '../services/financialInvoiceService';
 
 interface EnterpriseCustomizerProps {
   activeUser: UserProfile;
@@ -53,6 +54,39 @@ export default function EnterpriseCustomizer({ activeUser }: EnterpriseCustomize
     e.preventDefault();
     dataStore.saveReceiptConfig(receiptConfig);
     setSaveToast("✓ Custom POS & Invoice Receipt branding template updated!");
+    setTimeout(() => setSaveToast(null), 3500);
+  };
+
+  const handleTestDownloadPDF = () => {
+    const orders = dataStore.getOrders();
+    const testPOSOrder: POSOrder = orders[0] || {
+      id: 'POS-' + Math.floor(100000 + Math.random() * 900000),
+      items: [
+        { productId: 'PRD-001', name: 'Executive Suite Booking & Conference Hall (2 Days)', price: 1450.00, quantity: 1 },
+        { productId: 'PRD-002', name: 'Continental Catering & Hospitality Services', price: 185.00, quantity: 4 },
+        { productId: 'PRD-003', name: 'High-Speed Secure Dedicated Leased Line Access', price: 210.00, quantity: 1 }
+      ],
+      totalAmount: 2400.00,
+      createdAt: new Date().toISOString(),
+      cashierId: activeUser?.uid || 'cashier-01',
+      cashierName: activeUser?.name || 'Chief Financial Officer',
+      offline: false,
+      ai_fraud_flag: false,
+      customerName: 'Gold Coast Enterprises Ltd',
+      customerEmail: 'billing@goldcoast.com.gh',
+      customerPhone: '+233 24 555 0192',
+      paymentMethod: 'Card',
+      status: 'completed'
+    };
+
+    downloadFinancialInvoicePDF({
+      type: 'pos',
+      posOrder: testPOSOrder,
+      receiptConfig,
+      taxConfig,
+      activeUser
+    });
+    setSaveToast("✓ Sample branded PDF Invoice generated and downloaded!");
     setTimeout(() => setSaveToast(null), 3500);
   };
 
@@ -414,7 +448,15 @@ export default function EnterpriseCustomizer({ activeUser }: EnterpriseCustomize
             </div>
           </div>
 
-          <div className="pt-2 flex justify-end">
+          <div className="pt-2 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={handleTestDownloadPDF}
+              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs border border-slate-200 flex items-center gap-2 transition-colors"
+            >
+              <Download className="w-4 h-4 text-indigo-600" />
+              <span>Test Download Branded PDF</span>
+            </button>
             <button
               type="submit"
               className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md shadow-indigo-500/20 flex items-center gap-2"
