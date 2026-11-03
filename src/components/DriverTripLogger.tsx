@@ -46,6 +46,7 @@ import {
 import { formatPrice } from '../utils/currency';
 import DocumentOcrModal from './DocumentOcrModal';
 import JointServiceSignOffModal from './JointServiceSignOffModal';
+import FuelPumpLogModal from './FuelPumpLogModal';
 
 interface DriverTripLoggerProps {
   activeUser: UserProfile;
@@ -65,6 +66,7 @@ export default function DriverTripLogger({ activeUser, onNavigateToFleet }: Driv
   const [isOcrModalOpen, setIsOcrModalOpen] = useState(false);
   const [ocrDocType, setOcrDocType] = useState<'roadworthiness' | 'insurance' | 'license' | 'auto'>('license');
   const [isJointServiceModalOpen, setIsJointServiceModalOpen] = useState(false);
+  const [isFuelPumpModalOpen, setIsFuelPumpModalOpen] = useState(false);
 
   // Subscribe to changes
   useEffect(() => {
@@ -538,6 +540,14 @@ export default function DriverTripLogger({ activeUser, onNavigateToFleet }: Driv
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setIsFuelPumpModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md"
+          >
+            <Fuel className="w-4 h-4 text-slate-950" />
+            <span>Log Station Fuel Pump Reading</span>
+          </button>
           <button
             type="button"
             onClick={handleExportTripSheetPDF}
@@ -1885,6 +1895,15 @@ export default function DriverTripLogger({ activeUser, onNavigateToFleet }: Driv
       <JointServiceSignOffModal
         isOpen={isJointServiceModalOpen}
         onClose={() => setIsJointServiceModalOpen(false)}
+        activeUser={activeUser}
+        initialVehicle={activeVehicle}
+        allVehicles={vehicles}
+      />
+
+      {/* Station Fuel Pump Reading & AI Efficiency Log Modal */}
+      <FuelPumpLogModal
+        isOpen={isFuelPumpModalOpen}
+        onClose={() => setIsFuelPumpModalOpen(false)}
         activeUser={activeUser}
         initialVehicle={activeVehicle}
         allVehicles={vehicles}

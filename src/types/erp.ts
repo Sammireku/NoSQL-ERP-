@@ -1144,6 +1144,13 @@ export interface Vehicle {
   purchaseDate?: string;
   purchaseCost?: number;
   notes?: string;
+  // Fuel Efficiency & Anomaly Monitoring Thresholds
+  expectedFuelEfficiencyKml?: number; // e.g. Baseline 11.5 KM/L
+  fuelEfficiencyAlertDropPercent?: number; // e.g. 15% drop threshold alert
+  recentFuelEfficiencyKml?: number; // Latest calculated KM/L
+  fuelEfficiencyStatus?: 'normal' | 'degraded_warning' | 'critical_anomaly';
+  lastEfficiencyAnomalyDate?: string;
+  lastEfficiencyAnomalyReason?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -1266,7 +1273,32 @@ export interface VehicleExpense {
   approvalStatus: 'approved' | 'pending' | 'rejected';
   notes?: string;
   linkedTripId?: string;
+  // Pump Meter & Fuel Efficiency Analytics Fields
+  pumpReadingStart?: number; // Dispenser meter reading BEFORE fill
+  pumpReadingEnd?: number; // Dispenser meter reading AFTER fill
+  pumpNumber?: string; // Dispenser Pump # (e.g. Pump 04)
+  isFullTank?: boolean; // Brim-to-brim fill indicator
+  distanceSinceLastFillKm?: number; // Odometer delta
+  calculatedEfficiencyKml?: number; // Calculated KM/L for this fill
+  efficiencyAnomalyDetected?: boolean;
+  aiAnalysisNotes?: string;
   createdAt: string;
+}
+
+export interface FuelEfficiencyAnalysisResult {
+  vehicleId: string;
+  vehiclePlate: string;
+  vehicleName: string;
+  currentKml: number;
+  baselineKml: number;
+  percentageChange: number; // e.g. -24.5%
+  isBelowThreshold: boolean;
+  status: 'normal' | 'degraded_warning' | 'critical_anomaly';
+  potentialCauses: string[];
+  recommendedActions: string[];
+  aiAnalysisSummary: string;
+  alertIssueId?: string;
+  alertCreated?: boolean;
 }
 
 export interface VehicleIssueReport {

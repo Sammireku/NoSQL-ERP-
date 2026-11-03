@@ -656,6 +656,10 @@ export const DEFAULT_VEHICLES: Vehicle[] = [
     purchaseDate: '2023-04-10',
     purchaseCost: 38500,
     notes: 'Equipped with heavy-duty cargo tie-downs and GPS tracker. Primarily used for regional vocational supplies and solar kits distribution.',
+    expectedFuelEfficiencyKml: 11.5,
+    fuelEfficiencyAlertDropPercent: 15,
+    recentFuelEfficiencyKml: 11.8,
+    fuelEfficiencyStatus: 'normal',
     createdAt: new Date(Date.now() - 86400000 * 90).toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -685,6 +689,12 @@ export const DEFAULT_VEHICLES: Vehicle[] = [
     purchaseDate: '2022-08-15',
     purchaseCost: 32000,
     notes: 'High volume cargo bay with hydraulic lift gate. Scheduled for 70,000 km routine service soon.',
+    expectedFuelEfficiencyKml: 10.5,
+    fuelEfficiencyAlertDropPercent: 15,
+    recentFuelEfficiencyKml: 7.1,
+    fuelEfficiencyStatus: 'critical_anomaly',
+    lastEfficiencyAnomalyDate: '2026-11-02',
+    lastEfficiencyAnomalyReason: 'CRITICAL ANOMALY: Fuel efficiency dropped 32.4% below baseline (7.1 KM/L vs 10.5 KM/L expected). Gemini AI diagnosed clogged fuel injectors and restricted air filter intake.',
     createdAt: new Date(Date.now() - 86400000 * 120).toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -713,6 +723,10 @@ export const DEFAULT_VEHICLES: Vehicle[] = [
     purchaseDate: '2021-02-10',
     purchaseCost: 24500,
     notes: 'Currently undergoing scheduled clutch replacement and brake disc resurfacing.',
+    expectedFuelEfficiencyKml: 8.0,
+    fuelEfficiencyAlertDropPercent: 15,
+    recentFuelEfficiencyKml: 8.2,
+    fuelEfficiencyStatus: 'normal',
     createdAt: new Date(Date.now() - 86400000 * 180).toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -742,6 +756,10 @@ export const DEFAULT_VEHICLES: Vehicle[] = [
     purchaseDate: '2024-01-20',
     purchaseCost: 65000,
     notes: 'Dedicated executive shuttle for international donor delegations, board directors, and high-level stakeholder site visits.',
+    expectedFuelEfficiencyKml: 9.5,
+    fuelEfficiencyAlertDropPercent: 15,
+    recentFuelEfficiencyKml: 9.8,
+    fuelEfficiencyStatus: 'normal',
     createdAt: new Date(Date.now() - 86400000 * 60).toISOString(),
     updatedAt: new Date().toISOString()
   }

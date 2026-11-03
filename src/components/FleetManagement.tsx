@@ -50,6 +50,8 @@ import {
 import { formatPrice } from '../utils/currency';
 import DocumentOcrModal from './DocumentOcrModal';
 import JointServiceSignOffModal from './JointServiceSignOffModal';
+import FuelPumpLogModal from './FuelPumpLogModal';
+import FuelEfficiencyTrendDashboard from './FuelEfficiencyTrendDashboard';
 
 interface FleetManagementProps {
   activeUser: UserProfile;
@@ -102,7 +104,7 @@ export default function FleetManagement({ activeUser, onNavigateToDriverPortal }
   }, []);
 
   // Tabs
-  type FleetTab = 'overview' | 'vehicles' | 'trips' | 'maintenance' | 'expenses' | 'compliance' | 'issues' | 'licenses';
+  type FleetTab = 'overview' | 'vehicles' | 'trips' | 'maintenance' | 'expenses' | 'fuel_trends' | 'compliance' | 'issues' | 'licenses';
   const [activeTab, setActiveTab] = useState<FleetTab>('overview');
 
   // OCR Modal state
@@ -114,6 +116,9 @@ export default function FleetManagement({ activeUser, onNavigateToDriverPortal }
   // Joint Service Sign-Off Modal state
   const [isJointServiceModalOpen, setIsJointServiceModalOpen] = useState(false);
   const [jointServiceVehicle, setJointServiceVehicle] = useState<Vehicle | null>(null);
+
+  // Station Fuel Pump Log Modal state
+  const [isFuelPumpModalOpen, setIsFuelPumpModalOpen] = useState(false);
 
   // Driver License Registration Modal state
   const [isNewLicenseModalOpen, setIsNewLicenseModalOpen] = useState(false);
@@ -680,6 +685,7 @@ export default function FleetManagement({ activeUser, onNavigateToDriverPortal }
           { id: 'trips', label: `Trip Dispatch & Mileage Logs (${trips.length})`, icon: Compass },
           { id: 'maintenance', label: `Servicing & Workshop (${maintenance.length})`, icon: Wrench },
           { id: 'expenses', label: `Fuel & Fleet Expenses (${expenses.length})`, icon: Fuel },
+          { id: 'fuel_trends', label: `AI Fuel Efficiency Trends`, icon: Activity },
           { id: 'compliance', label: `Statutory Renewals & Insurance`, icon: ShieldCheck },
           { id: 'licenses', label: `Driver Licenses (${driverLicenses.length})`, icon: UserCheck },
           { id: 'issues', label: `Driver Fault Tickets (${kpiStats.openIssues})`, icon: AlertTriangle }
@@ -1353,66 +1359,200 @@ export default function FleetManagement({ activeUser, onNavigateToDriverPortal }
 
       {/* TAB 5: FUEL & FLEET EXPENSES */}
       {activeTab === 'expenses' && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">Fleet Fuel, Tolls & Operational Expenses</h3>
-              <p className="text-xs text-slate-500">Complete vehicle expenditure audit synchronized with financial ledger</p>
+        <div className="space-y-6">
+          
+          {/* GEMINI AI FUEL EFFICIENCY & ANOMALY TRACKER BANNER */}
+          <div className="bg-gradient-to-r from-amber-950 via-slate-900 to-amber-900 text-white rounded-2xl p-5 shadow-sm border border-amber-800/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="p-2.5 bg-amber-500/30 border border-amber-400/30 rounded-xl text-amber-300">
+                <Fuel className="w-6 h-6 animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-sm font-bold text-white">Gemini AI Station Fuel Meter & Efficiency Monitor</h3>
+                  <span className="px-2 py-0.5 bg-amber-500/30 text-amber-200 border border-amber-400/30 rounded text-[10px] font-mono">
+                    Anomaly Detection Active
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 mt-1 max-w-2xl">
+                  Drivers log station dispenser meter readings (Start L → End L) & brim-fill liters. Gemini AI analyzes fuel consumption trends against odometer mileage to automatically detect mechanical faults or fuel drops below threshold, alerting fleet managers instantly.
+                </p>
+              </div>
             </div>
+
             <button
               type="button"
-              onClick={() => handleOpenExpenseModal()}
-              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+              onClick={() => setIsFuelPumpModalOpen(true)}
+              className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2 whitespace-nowrap self-start md:self-auto"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Log Expense</span>
+              <Fuel className="w-4 h-4 text-slate-950" />
+              <span>Log Station Pump Reading</span>
             </button>
           </div>
 
-          <div className="overflow-x-auto mt-4">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200">
-                <tr>
-                  <th className="py-3 px-3">Date</th>
-                  <th className="py-3 px-3">Vehicle</th>
-                  <th className="py-3 px-3">Category</th>
-                  <th className="py-3 px-3">Vendor / Station</th>
-                  <th className="py-3 px-3">Receipt / Voucher</th>
-                  <th className="py-3 px-3">Driver</th>
-                  <th className="py-3 px-3 text-right">Amount</th>
-                  <th className="py-3 px-3 text-center">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {expenses.map(e => (
-                  <tr key={e.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3 px-3 text-slate-600">{e.date}</td>
-                    <td className="py-3 px-3 font-mono font-bold text-slate-900">{e.vehiclePlate}</td>
-                    <td className="py-3 px-3 capitalize">
-                      <span className="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-700">
-                        {e.expenseCategory.replace(/_/g, ' ')}
+          {/* ACTIVE ANOMALY ALERTS PANEL (If any vehicles flagged) */}
+          {vehicles.filter(v => v.fuelEfficiencyStatus === 'degraded_warning' || v.fuelEfficiencyStatus === 'critical_anomaly').length > 0 && (
+            <div className="bg-rose-50 border border-rose-200 rounded-2xl p-5 shadow-xs space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-rose-900 font-bold text-xs uppercase tracking-wider">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 animate-bounce" />
+                  <span>Active Fuel Efficiency Anomaly Alerts ({vehicles.filter(v => v.fuelEfficiencyStatus === 'degraded_warning' || v.fuelEfficiencyStatus === 'critical_anomaly').length})</span>
+                </div>
+                <span className="text-[11px] text-rose-700 font-medium">Automatic Maintenance Alerts Sent</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {vehicles.filter(v => v.fuelEfficiencyStatus === 'degraded_warning' || v.fuelEfficiencyStatus === 'critical_anomaly').map(v => (
+                  <div key={v.id} className="bg-white rounded-xl p-4 border border-rose-200 shadow-xs flex flex-col justify-between gap-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="font-mono font-bold text-xs px-2 py-0.5 rounded bg-amber-400 text-slate-900 mr-2">
+                          {v.plateNumber}
+                        </span>
+                        <span className="text-xs font-bold text-slate-900">{v.name}</span>
+                        <span className="block text-[10px] text-slate-500 mt-0.5">Assigned Driver: {v.assignedDriverName || 'Depot'}</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800 border border-rose-300">
+                        {v.recentFuelEfficiencyKml ? `${v.recentFuelEfficiencyKml} KM/L` : 'Efficiency Degraded'}
                       </span>
-                      {e.litersPurchased && (
-                        <span className="block text-[10px] text-slate-400">{e.litersPurchased} Liters</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3 text-slate-800">{e.vendorOrStation}</td>
-                    <td className="py-3 px-3 font-mono text-slate-500">{e.receiptNumber || '-'}</td>
-                    <td className="py-3 px-3 text-slate-700">{e.driverName || 'Depot'}</td>
-                    <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
-                      {formatPrice(e.amount)}
-                    </td>
-                    <td className="py-3 px-3 text-center">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 capitalize">
-                        {e.approvalStatus}
-                      </span>
-                    </td>
-                  </tr>
+                    </div>
+
+                    {v.lastEfficiencyAnomalyReason && (
+                      <p className="text-[11px] text-slate-700 italic bg-rose-50/50 p-2 rounded-lg border border-rose-100">
+                        "{v.lastEfficiencyAnomalyReason}"
+                      </p>
+                    )}
+
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                      <span className="text-[10px] text-slate-400">Flagged: {v.lastEfficiencyAnomalyDate || 'Today'}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setJointServiceVehicle(v);
+                          setIsJointServiceModalOpen(true);
+                        }}
+                        className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[11px] font-bold flex items-center gap-1 transition-colors"
+                      >
+                        <Wrench className="w-3 h-3" />
+                        <span>Schedule Workshop Service</span>
+                      </button>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </div>
+          )}
+
+          {/* FUEL EXPENSES & PUMP LOGS TABLE */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Fleet Fuel, Tolls & Station Meter Logs</h3>
+                <p className="text-xs text-slate-500">Complete vehicle expenditure audit & station dispenser pump meter logs</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsFuelPumpModalOpen(true)}
+                  className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+                >
+                  <Fuel className="w-3.5 h-3.5" />
+                  <span>Log Pump Reading</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenExpenseModal()}
+                  className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Log General Expense</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto mt-4">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200">
+                  <tr>
+                    <th className="py-3 px-3">Date</th>
+                    <th className="py-3 px-3">Vehicle</th>
+                    <th className="py-3 px-3">Expense & Station</th>
+                    <th className="py-3 px-3 text-center">Pump Meter (Start → End)</th>
+                    <th className="py-3 px-3 text-right">Liters / Odometer</th>
+                    <th className="py-3 px-3 text-center">Efficiency (KM/L)</th>
+                    <th className="py-3 px-3 text-right">Amount</th>
+                    <th className="py-3 px-3 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {expenses.map(e => (
+                    <tr key={e.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3 px-3 text-slate-600">{e.date}</td>
+                      <td className="py-3 px-3 font-mono font-bold text-slate-900">{e.vehiclePlate}</td>
+                      <td className="py-3 px-3">
+                        <span className="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-700 capitalize">
+                          {e.expenseCategory.replace(/_/g, ' ')}
+                        </span>
+                        <span className="block text-[11px] font-medium text-slate-800 mt-0.5">{e.vendorOrStation}</span>
+                      </td>
+                      <td className="py-3 px-3 text-center font-mono text-slate-600">
+                        {e.pumpReadingStart && e.pumpReadingEnd ? (
+                          <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] font-bold">
+                            {e.pumpReadingStart} L → {e.pumpReadingEnd} L
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-[10px]">-</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 text-right font-mono">
+                        {e.litersPurchased ? (
+                          <span className="font-bold text-amber-900 block">{e.litersPurchased} L</span>
+                        ) : null}
+                        {e.odometer ? (
+                          <span className="text-[10px] text-slate-500 block">{e.odometer.toLocaleString()} KM</span>
+                        ) : null}
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        {e.calculatedEfficiencyKml ? (
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                            e.efficiencyAnomalyDetected 
+                              ? 'bg-rose-100 text-rose-800 border border-rose-300' 
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          }`}>
+                            {e.calculatedEfficiencyKml} KM/L {e.efficiencyAnomalyDetected ? '🚨 Drop' : '✓'}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-[10px]">-</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
+                        {formatPrice(e.amount)}
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 capitalize">
+                          {e.approvalStatus}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
+      )}
+
+      {/* TAB: GEMINI AI FUEL EFFICIENCY TRENDS & RECHARTS VISUALIZATION */}
+      {activeTab === 'fuel_trends' && (
+        <FuelEfficiencyTrendDashboard
+          vehicles={vehicles}
+          expenses={expenses}
+          activeUser={activeUser}
+          onScheduleService={(veh) => {
+            setJointServiceVehicle(veh);
+            setIsJointServiceModalOpen(true);
+          }}
+        />
       )}
 
       {/* TAB 6: STATUTORY COMPLIANCE & RENEWALS */}
@@ -2623,6 +2763,14 @@ export default function FleetManagement({ activeUser, onNavigateToDriverPortal }
           </div>
         </div>
       )}
+
+      {/* Station Fuel Pump Log & Gemini AI Efficiency Modal */}
+      <FuelPumpLogModal
+        isOpen={isFuelPumpModalOpen}
+        onClose={() => setIsFuelPumpModalOpen(false)}
+        activeUser={activeUser}
+        allVehicles={vehicles}
+      />
     </div>
   );
 }

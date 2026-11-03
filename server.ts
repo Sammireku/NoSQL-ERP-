@@ -2308,6 +2308,155 @@ Return ONLY a JSON object strictly following this JSON format:
 });
 
 /**
+ * AI Endpoint: Analyze Fuel Consumption Trends & Efficiency Anomalies against Mileage
+ * Analyzes pump readings, odometer delta, and liters filled to evaluate KM/L against baseline.
+ * Uses Gemini 3.8 Flash to detect mechanical faults causing efficiency drops and recommend maintenance.
+ */
+app.post('/api/fleet/analyze-fuel-trend', async (req, res) => {
+  const {
+    vehicleId,
+    vehiclePlate,
+    vehicleName,
+    driverName,
+    currentOdometer,
+    previousOdometer,
+    litersPurchased,
+    pumpReadingStart,
+    pumpReadingEnd,
+    isFullTank,
+    expectedBaselineKml,
+    alertThresholdPercent = 15,
+    stationName,
+    pumpNumber
+  } = req.body;
+
+  if (!vehiclePlate || !litersPurchased) {
+    return res.status(400).json({ error: 'Missing vehicle license plate or fuel liters purchased.' });
+  }
+
+  // Calculate distance traveled since last fill
+  const distKm = previousOdometer && currentOdometer > previousOdometer 
+    ? (currentOdometer - previousOdometer) 
+    : 380; // Default estimate if no previous odometer
+    
+  const liters = parseFloat(litersPurchased) || 1;
+  const calculatedKml = Number((distKm / liters).toFixed(2));
+  const baselineKml = parseFloat(expectedBaselineKml) || 11.5;
+  const pctChange = Number((((calculatedKml - baselineKml) / baselineKml) * 100).toFixed(1));
+  
+  const isBelowThreshold = pctChange <= -Math.abs(alertThresholdPercent) || calculatedKml < (baselineKml * (1 - alertThresholdPercent / 100));
+  const status = isBelowThreshold ? (pctChange <= -25 ? 'critical_anomaly' : 'degraded_warning') : 'normal';
+
+  try {
+    const ai = getAI();
+    const prompt = `You are a Senior Fleet Maintenance & Mechanical Diagnostics Engineer AI.
+Analyze the following fuel consumption & pump meter log for an enterprise vehicle:
+
+VEHICLE METRICS:
+- Vehicle Plate: ${vehiclePlate} (${vehicleName || 'Fleet Transport'})
+- Driver: ${driverName || 'Assigned Driver'}
+- Current Odometer: ${currentOdometer || 'N/A'} KM
+- Station Pump Reading BEFORE Fill: ${pumpReadingStart ? pumpReadingStart + ' L' : 'N/A'}
+- Station Pump Reading AFTER Fill: ${pumpReadingEnd ? pumpReadingEnd + ' L' : 'N/A'}
+- Liters Fueled: ${liters} L (${isFullTank ? 'Full Brim Tank Fill' : 'Partial Tank Fill'})
+- Distance Driven Since Last Fill: ${distKm} KM
+- Calculated Fuel Efficiency: ${calculatedKml} KM/Liter
+- Expected Vehicle Baseline: ${baselineKml} KM/Liter
+- Efficiency Delta: ${pctChange}% (${pctChange < 0 ? 'DEGRADATION DROP' : 'OPTIMAL / IMPROVED'})
+- Alert Threshold Set: -${alertThresholdPercent}% drop from baseline
+- Station / Pump: ${stationName || 'Service Station'} ${pumpNumber ? '(' + pumpNumber + ')' : ''}
+
+Evaluate the consumption trend and determine if there is a potential mechanical fault or fuel anomaly.
+Return ONLY a JSON object adhering strictly to this JSON format:
+{
+  "status": "${status}",
+  "isBelowThreshold": ${isBelowThreshold},
+  "currentKml": ${calculatedKml},
+  "baselineKml": ${baselineKml},
+  "percentageChange": ${pctChange},
+  "aiAnalysisSummary": "2-3 sentence executive mechanical summary of the fuel economy trend.",
+  "potentialCauses": [
+    "Specific cause 1 (e.g., Clogged fuel injectors or dirty air filter)",
+    "Specific cause 2 (e.g., Low tire inflation pressure or sticking brake caliper)",
+    "Specific cause 3 (e.g., Fuel siphoning / theft or inaccurate pump dispenser)"
+  ],
+  "recommendedActions": [
+    "Workshop inspection action 1",
+    "Maintenance check action 2"
+  ]
+}
+No markdown formatting, return raw JSON only.`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.8-flash',
+      contents: [prompt],
+      config: {
+        responseMimeType: 'application/json'
+      }
+    });
+
+    const text = response.text || '{}';
+    const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const parsed = JSON.parse(cleaned);
+
+    return res.json({
+      success: true,
+      analysis: {
+        vehicleId,
+        vehiclePlate,
+        vehicleName,
+        currentKml: calculatedKml,
+        baselineKml,
+        percentageChange: pctChange,
+        isBelowThreshold,
+        status: parsed.status || status,
+        potentialCauses: parsed.potentialCauses || [
+          'Dirty or clogged fuel injectors restricting combustion efficiency',
+          'Restricted engine air filter or faulty oxygen / MAF sensor',
+          'Under-inflated tires or mechanical brake drag',
+          'Possible fuel siphoning or dispenser calibration error'
+        ],
+        recommendedActions: parsed.recommendedActions || [
+          'Schedule diagnostic scan & fuel injector pressure test',
+          'Inspect engine air filter and fuel filter element',
+          'Verify tire cold pressures across all axles'
+        ],
+        aiAnalysisSummary: parsed.aiAnalysisSummary || `Vehicle ${vehiclePlate} logged ${calculatedKml} KM/L (${pctChange}% relative to baseline ${baselineKml} KM/L). ${isBelowThreshold ? 'Fuel efficiency has dropped below set alert threshold.' : 'Efficiency is within normal parameters.'}`
+      }
+    });
+
+  } catch (error: any) {
+    console.warn("Gemini fuel trend analysis fallback:", error.message);
+    
+    return res.json({
+      success: true,
+      analysis: {
+        vehicleId,
+        vehiclePlate,
+        vehicleName,
+        currentKml: calculatedKml,
+        baselineKml,
+        percentageChange: pctChange,
+        isBelowThreshold,
+        status,
+        potentialCauses: [
+          'Clogged fuel injectors or dirty air intake filter',
+          'Faulty oxygen / mass air flow sensor',
+          'Tire under-inflation or dragging brake caliper',
+          'Fuel siphoning or station pump meter discrepancy'
+        ],
+        recommendedActions: [
+          'Perform engine diagnostic scan at next scheduled service',
+          'Check air filter and replace fuel filter element',
+          'Inspect tire pressures and brake pad clearance'
+        ],
+        aiAnalysisSummary: `Calculated efficiency is ${calculatedKml} KM/L (${pctChange}% change from ${baselineKml} KM/L baseline). ${isBelowThreshold ? 'Anomalous fuel efficiency drop detected below preset threshold.' : 'Fuel economy is compliant.'}`
+      }
+    });
+  }
+});
+
+/**
  * AI-powered supplier invoice & inventory receipt parser
  * Extracts vendor name, total amount, date, line items with product name, quantity, cost price, selling price, and category.
  */
