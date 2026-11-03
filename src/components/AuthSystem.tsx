@@ -670,6 +670,8 @@ export default function AuthSystem({ activeUser, onSelectUser, onStartOnboarding
                 <option value="manager">Company Manager</option>
                 <option value="sysadmin">System Admin</option>
                 <option value="accountant">Senior Accountant</option>
+                <option value="driver">Logistics Driver</option>
+                <option value="warehouse">Warehouse & Fleet Officer</option>
                 <option value="sales">Sales Executive</option>
                 <option value="cashier">Cashier</option>
               </select>
@@ -847,6 +849,7 @@ export default function AuthSystem({ activeUser, onSelectUser, onStartOnboarding
                   <option value="accountant">Senior Accountant</option>
                   <option value="sales">Sales Executive</option>
                   <option value="cashier">Cashier / Register</option>
+                  <option value="driver">Logistics Driver</option>
                   <option value="warehouse">Warehouse Manager</option>
                 </select>
               </div>

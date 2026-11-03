@@ -123,6 +123,113 @@
         }
       },
       "required": ["id", "userId", "action"]
+    },
+    "Vehicle": {
+      "title": "Vehicle",
+      "description": "Enterprise fleet vehicle record and statutory metadata",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "plateNumber": { "type": "string" },
+        "make": { "type": "string" },
+        "model": { "type": "string" },
+        "year": { "type": "number" },
+        "vehicleType": { "type": "string" },
+        "fuelType": { "type": "string" },
+        "currentOdometer": { "type": "number" },
+        "status": { "type": "string" },
+        "assignedDriverId": { "type": "string" },
+        "assignedDriverName": { "type": "string" },
+        "department": { "type": "string" },
+        "currentLocation": { "type": "string" },
+        "insuranceExpiryDate": { "type": "string" },
+        "roadworthinessExpiryDate": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "plateNumber", "make", "model", "currentOdometer", "status"]
+    },
+    "VehicleTrip": {
+      "title": "VehicleTrip",
+      "description": "Driver mileage, location, purpose and journey log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "vehicleId": { "type": "string" },
+        "vehiclePlate": { "type": "string" },
+        "driverId": { "type": "string" },
+        "driverName": { "type": "string" },
+        "startOdometer": { "type": "number" },
+        "endOdometer": { "type": "number" },
+        "distanceKm": { "type": "number" },
+        "startLocation": { "type": "string" },
+        "destinationLocation": { "type": "string" },
+        "purpose": { "type": "string" },
+        "purposeNotes": { "type": "string" },
+        "departureTime": { "type": "string" },
+        "arrivalTime": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "vehicleId", "driverId", "driverName", "startOdometer", "startLocation", "purpose", "departureTime", "status"]
+    },
+    "VehicleMaintenance": {
+      "title": "VehicleMaintenance",
+      "description": "Fleet servicing, scheduled repairs, and statutory inspections",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "vehicleId": { "type": "string" },
+        "vehiclePlate": { "type": "string" },
+        "serviceType": { "type": "string" },
+        "title": { "type": "string" },
+        "serviceProvider": { "type": "string" },
+        "scheduledDate": { "type": "string" },
+        "odometerAtService": { "type": "number" },
+        "cost": { "type": "number" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "vehicleId", "serviceType", "title", "serviceProvider", "cost", "status"]
+    },
+    "VehicleExpense": {
+      "title": "VehicleExpense",
+      "description": "Vehicle fuel, tolls, minor repairs and operational expenditures",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "vehicleId": { "type": "string" },
+        "vehiclePlate": { "type": "string" },
+        "expenseCategory": { "type": "string" },
+        "amount": { "type": "number" },
+        "currency": { "type": "string" },
+        "date": { "type": "string" },
+        "vendorOrStation": { "type": "string" },
+        "paymentMethod": { "type": "string" },
+        "approvalStatus": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "vehicleId", "expenseCategory", "amount", "date", "approvalStatus"]
+    },
+    "DriverLicense": {
+      "title": "DriverLicense",
+      "description": "Driver license registration, credentials, expiry date and verification status",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "driverId": { "type": "string" },
+        "driverName": { "type": "string" },
+        "licenseNumber": { "type": "string" },
+        "licenseClass": { "type": "string" },
+        "issueDate": { "type": "string" },
+        "expiryDate": { "type": "string" },
+        "issuingAuthority": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "driverId", "licenseNumber", "expiryDate", "status"]
     }
   },
   "firestore": {
@@ -143,6 +250,36 @@
         "$ref": "#/entities/AuditLog"
       },
       "description": "Immutable system event log"
+    },
+    "/vehicles/{vehicleId}": {
+      "schema": {
+        "$ref": "#/entities/Vehicle"
+      },
+      "description": "Enterprise fleet vehicle registry"
+    },
+    "/vehicle_trips/{tripId}": {
+      "schema": {
+        "$ref": "#/entities/VehicleTrip"
+      },
+      "description": "Driver trip, mileage, and location logs"
+    },
+    "/vehicle_maintenance/{maintenanceId}": {
+      "schema": {
+        "$ref": "#/entities/VehicleMaintenance"
+      },
+      "description": "Fleet maintenance and servicing records"
+    },
+    "/vehicle_expenses/{expenseId}": {
+      "schema": {
+        "$ref": "#/entities/VehicleExpense"
+      },
+      "description": "Fleet fuel and operational expenses"
+    },
+    "/driver_licenses/{licenseId}": {
+      "schema": {
+        "$ref": "#/entities/DriverLicense"
+      },
+      "description": "Driver credentials and license registry"
     }
   }
 }

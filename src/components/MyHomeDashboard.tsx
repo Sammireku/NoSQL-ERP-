@@ -53,7 +53,8 @@ import {
   AlertCircle,
   Check,
   RotateCcw,
-  Layers
+  Layers,
+  Compass
 } from 'lucide-react';
 import { UserProfile, ERPModuleConfig, POSOrder, TaskItem, Opportunity, TaskStatus } from '../types/erp';
 import { dataStore } from '../config/firebase';
@@ -98,6 +99,7 @@ const ALL_AVAILABLE_WIDGETS = [
   { id: 'team_chat', name: 'Team Messaging & Feed', desc: 'Staff announcements, housekeeping & department messages', icon: MessageSquare },
   { id: 'procurement', name: 'Vendor Procurement Orders', desc: 'Pending purchase orders & supplier delivery status', icon: Truck },
   { id: 'audit', name: 'Security & Audit Trail', desc: 'Live immutable system activity & operation logs', icon: Activity },
+  { id: 'fleet', name: 'Fleet & Vehicle Logistics Hub', desc: 'Real-time vehicle status, driver mileage logbook, servicing & fuel expense tracking', icon: Truck },
 ];
 
 const EDUCATION_OPTIONS = [
@@ -199,7 +201,7 @@ export default function MyHomeDashboard({
   const [auditTimeFilter, setAuditTimeFilter] = useState<'all' | 'today' | 'week'>('all');
 
   // Quick Actions Filter
-  const [quickActionCategory, setQuickActionCategory] = useState<'all' | 'sales' | 'hr' | 'finance'>('all');
+  const [quickActionCategory, setQuickActionCategory] = useState<'all' | 'sales' | 'hr' | 'finance' | 'logistics'>('all');
 
   // Hospitality & Grants Filters
   const [hospitalityStatusFilter, setHospitalityStatusFilter] = useState<'all' | 'occupied' | 'vacant' | 'maintenance'>('all');
@@ -1133,6 +1135,7 @@ export default function MyHomeDashboard({
                         <option value="receptionist">Receptionist</option>
                         <option value="sales">Sales</option>
                         <option value="cashier">Cashier</option>
+                        <option value="driver">Driver</option>
                         <option value="manager">Manager</option>
                         <option value="ceo">CEO</option>
                       </select>
@@ -1329,7 +1332,8 @@ export default function MyHomeDashboard({
                       { id: 'all', label: 'All Operations' },
                       { id: 'sales', label: 'Sales & POS' },
                       { id: 'hr', label: 'Students & HR' },
-                      { id: 'finance', label: 'Finance' }
+                      { id: 'finance', label: 'Finance' },
+                      { id: 'logistics', label: 'Fleet & Logistics' }
                     ].map(tab => (
                       <button
                         key={tab.id}
@@ -1346,7 +1350,7 @@ export default function MyHomeDashboard({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
                   {(quickActionCategory === 'all' || quickActionCategory === 'sales') && (
                     <button
                       onClick={() => onNavigateToTab('sales')}
@@ -1388,6 +1392,28 @@ export default function MyHomeDashboard({
                       <Coins className="w-4 h-4 text-emerald-600 mb-1.5 group-hover:scale-110 transition-transform" />
                       <p className="font-bold text-slate-800 text-xs">Issue Cash</p>
                       <p className="text-[9.5px] text-slate-400">Petty Voucher</p>
+                    </button>
+                  )}
+
+                  {(quickActionCategory === 'all' || quickActionCategory === 'logistics') && (
+                    <button
+                      onClick={() => onNavigateToTab('driver_portal')}
+                      className="p-3 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 rounded-xl text-left transition-all group cursor-pointer"
+                    >
+                      <Compass className="w-4 h-4 text-indigo-600 mb-1.5 group-hover:scale-110 transition-transform" />
+                      <p className="font-bold text-slate-800 text-xs">Log Mileage</p>
+                      <p className="text-[9.5px] text-slate-400">Driver Portal</p>
+                    </button>
+                  )}
+
+                  {(quickActionCategory === 'all' || quickActionCategory === 'logistics') && (
+                    <button
+                      onClick={() => onNavigateToTab('fleet')}
+                      className="p-3 bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 rounded-xl text-left transition-all group cursor-pointer"
+                    >
+                      <Truck className="w-4 h-4 text-amber-600 mb-1.5 group-hover:scale-110 transition-transform" />
+                      <p className="font-bold text-slate-800 text-xs">Manage Fleet</p>
+                      <p className="text-[9.5px] text-slate-400">Vehicles & Service</p>
                     </button>
                   )}
                 </div>
@@ -2405,6 +2431,7 @@ export default function MyHomeDashboard({
                     <option value="manager">Manager</option>
                     <option value="accountant">Accountant</option>
                     <option value="cashier">Cashier</option>
+                    <option value="driver">Logistics Driver</option>
                     <option value="warehouse">Warehouse</option>
                     <option value="trainer">Vocational Trainer</option>
                   </select>

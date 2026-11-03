@@ -63,7 +63,13 @@ import {
   StockLocation,
   CompanyTaxConfig,
   ReceiptTemplateConfig,
-  DashboardWidgetConfig
+  DashboardWidgetConfig,
+  Vehicle,
+  VehicleTrip,
+  VehicleMaintenance,
+  VehicleExpense,
+  VehicleIssueReport,
+  DriverLicense
 } from '../types/erp';
 
 // Initialize real Firebase if config is not the default placeholder
@@ -141,6 +147,12 @@ const STORAGE_KEYS = {
   TAX_CONFIG: 'erp_sandbox_tax_config',
   RECEIPT_CONFIG: 'erp_sandbox_receipt_config',
   DASHBOARD_WIDGETS: 'erp_sandbox_dashboard_widgets',
+  VEHICLES: 'erp_sandbox_vehicles',
+  VEHICLE_TRIPS: 'erp_sandbox_vehicle_trips',
+  VEHICLE_MAINTENANCE: 'erp_sandbox_vehicle_maintenance',
+  VEHICLE_EXPENSES: 'erp_sandbox_vehicle_expenses',
+  VEHICLE_ISSUES: 'erp_sandbox_vehicle_issues',
+  DRIVER_LICENSES: 'erp_sandbox_driver_licenses',
 };
 
 export const DEFAULT_MIGRATION_JOBS: SystemMigrationJob[] = [
@@ -287,6 +299,26 @@ export const DEFAULT_MODULES: ERPModuleConfig[] = [
     description: 'Room management, direct website & OTA sync (Airbnb, Booking.com, Hostelworld).',
     iconName: 'Building2',
     linkedModuleIds: ['pos', 'financials', 'customers']
+  },
+  {
+    id: 'fleet',
+    name: 'Fleet & Vehicle Logistics',
+    department: 'Operations & Supply Chain',
+    enabled: true,
+    order: 12,
+    description: 'Vehicle registry, servicing schedules, fuel & maintenance expenses, and insurance renewals.',
+    iconName: 'Truck',
+    linkedModuleIds: ['driver_portal', 'procurement', 'financials']
+  },
+  {
+    id: 'driver_portal',
+    name: 'Driver Trip & Mileage Logger',
+    department: 'Operations & Supply Chain',
+    enabled: true,
+    order: 13,
+    description: 'Driver clock-in, start/end odometer mileage tracking, trip locations, purpose, and road expenses.',
+    iconName: 'Compass',
+    linkedModuleIds: ['fleet', 'tasks']
   }
 ];
 
@@ -533,6 +565,38 @@ const DEFAULT_USERS: UserProfile[] = [
     onboardingCompleted: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+  },
+  {
+    uid: 'user_fleet_mgr_01',
+    name: 'Samuel Mensah (Fleet Mgr)',
+    email: 'fleet@tumierp.com',
+    role: 'manager',
+    department: 'Logistics & Fleet',
+    jobTitle: 'Fleet Operations Manager',
+    companyName: 'My Enterprise',
+    permissions: ['manage_fleet', 'dispatch_trips', 'approve_vehicle_expenses', 'schedule_maintenance', 'view_financials'],
+    ai_skills_match_score: 94,
+    pin: '3333',
+    status: 'active',
+    onboardingCompleted: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    uid: 'user_driver_01',
+    name: 'Kofi Boateng (Fleet Driver)',
+    email: 'driver@tumierp.com',
+    role: 'driver',
+    department: 'Logistics & Fleet',
+    jobTitle: 'Senior Logistics & Transport Driver',
+    companyName: 'My Enterprise',
+    permissions: ['log_trips', 'log_mileage', 'log_fuel_expenses', 'report_vehicle_issues'],
+    ai_skills_match_score: 91,
+    pin: '4444',
+    status: 'active',
+    onboardingCompleted: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   }
 ];
 
@@ -564,6 +628,379 @@ export const DEFAULT_FIXED_ASSETS: FixedAssetRecord[] = [];
 export const DEFAULT_LEAVE_REQUESTS: LeaveRequestRecord[] = [];
 export const DEFAULT_PERFORMANCE_REVIEWS: PerformanceReviewRecord[] = [];
 export const DEFAULT_PAYROLL_RUNS: PayrollRunRecord[] = [];
+
+export const DEFAULT_VEHICLES: Vehicle[] = [
+  {
+    id: 'veh_01',
+    name: 'Toyota Hilux 4x4 Double Cabin (Logistics-1)',
+    plateNumber: 'GW-4920-24',
+    vin: 'MHF23H90K2381921',
+    make: 'Toyota',
+    model: 'Hilux 2.8 GD-6',
+    year: 2023,
+    vehicleType: 'pickup',
+    fuelType: 'diesel',
+    transmission: 'manual',
+    tankCapacityLiters: 80,
+    currentOdometer: 42850,
+    status: 'available',
+    assignedDriverId: 'user_driver_01',
+    assignedDriverName: 'Kofi Boateng (Fleet Driver)',
+    department: 'Logistics & Supply Chain',
+    currentLocation: 'Accra Central Depot - Gate B',
+    fuelLevelPercent: 78,
+    insurancePolicyNo: 'GLI-COMM-99214',
+    insuranceExpiryDate: '2026-12-15',
+    roadworthinessExpiryDate: '2026-11-28',
+    roadFundExpiryDate: '2027-03-31',
+    purchaseDate: '2023-04-10',
+    purchaseCost: 38500,
+    notes: 'Equipped with heavy-duty cargo tie-downs and GPS tracker. Primarily used for regional vocational supplies and solar kits distribution.',
+    createdAt: new Date(Date.now() - 86400000 * 90).toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'veh_02',
+    name: 'Ford Transit 350 High-Roof Cargo Van',
+    plateNumber: 'GE-1845-23',
+    vin: '1FTBR1Y88PKA98214',
+    make: 'Ford',
+    model: 'Transit 350L',
+    year: 2022,
+    vehicleType: 'van',
+    fuelType: 'diesel',
+    transmission: 'automatic',
+    tankCapacityLiters: 95,
+    currentOdometer: 68420,
+    status: 'available',
+    assignedDriverId: 'user_driver_02',
+    assignedDriverName: 'Emmanuel Osei',
+    department: 'Warehouse Delivery',
+    currentLocation: 'Tema Logistics Hub',
+    fuelLevelPercent: 62,
+    insurancePolicyNo: 'SIC-FLEET-34012',
+    insuranceExpiryDate: '2026-11-20',
+    roadworthinessExpiryDate: '2026-12-05',
+    roadFundExpiryDate: '2027-01-15',
+    purchaseDate: '2022-08-15',
+    purchaseCost: 32000,
+    notes: 'High volume cargo bay with hydraulic lift gate. Scheduled for 70,000 km routine service soon.',
+    createdAt: new Date(Date.now() - 86400000 * 120).toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'veh_03',
+    name: 'Hyundai H-100 Heavy Flatbed Utility',
+    plateNumber: 'GS-7729-22',
+    vin: 'KMHWB41BPNA11928',
+    make: 'Hyundai',
+    model: 'H-100 Porter Flatbed',
+    year: 2021,
+    vehicleType: 'truck',
+    fuelType: 'diesel',
+    transmission: 'manual',
+    tankCapacityLiters: 65,
+    currentOdometer: 91300,
+    status: 'in_service',
+    assignedDriverName: 'Kwesi Mensah',
+    department: 'Procurement & Heavy Haul',
+    currentLocation: 'AutoCare Mechanical Works, Kaneshie',
+    fuelLevelPercent: 35,
+    insurancePolicyNo: 'ENTERPRISE-TRK-781',
+    insuranceExpiryDate: '2027-02-18',
+    roadworthinessExpiryDate: '2027-04-10',
+    roadFundExpiryDate: '2027-02-28',
+    purchaseDate: '2021-02-10',
+    purchaseCost: 24500,
+    notes: 'Currently undergoing scheduled clutch replacement and brake disc resurfacing.',
+    createdAt: new Date(Date.now() - 86400000 * 180).toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'veh_04',
+    name: 'Toyota Land Cruiser Prado TX (VIP & Executive)',
+    plateNumber: 'GT-0044-24',
+    vin: 'JTEBX29J70K182910',
+    make: 'Toyota',
+    model: 'Land Cruiser Prado TX',
+    year: 2024,
+    vehicleType: 'suv',
+    fuelType: 'petrol',
+    transmission: 'automatic',
+    tankCapacityLiters: 87,
+    currentOdometer: 14200,
+    status: 'available',
+    assignedDriverId: 'user_driver_01',
+    assignedDriverName: 'Kofi Boateng (Fleet Driver)',
+    department: 'Executive & VIP Transport',
+    currentLocation: 'Headquarters Executive Carport, Airport Residential',
+    fuelLevelPercent: 92,
+    insurancePolicyNo: 'STAR-VIP-88120',
+    insuranceExpiryDate: '2027-06-30',
+    roadworthinessExpiryDate: '2027-08-15',
+    roadFundExpiryDate: '2027-06-30',
+    purchaseDate: '2024-01-20',
+    purchaseCost: 65000,
+    notes: 'Dedicated executive shuttle for international donor delegations, board directors, and high-level stakeholder site visits.',
+    createdAt: new Date(Date.now() - 86400000 * 60).toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+];
+
+export const DEFAULT_VEHICLE_TRIPS: VehicleTrip[] = [
+  {
+    id: 'trip_101',
+    vehicleId: 'veh_01',
+    vehiclePlate: 'GW-4920-24',
+    vehicleName: 'Toyota Hilux 4x4 Double Cabin (Logistics-1)',
+    driverId: 'user_driver_01',
+    driverName: 'Kofi Boateng (Fleet Driver)',
+    driverEmail: 'driver@tumierp.com',
+    startOdometer: 42680,
+    endOdometer: 42850,
+    distanceKm: 170,
+    startLocation: 'Accra Central Depot - North Industrial Area',
+    destinationLocation: 'Kasoa Regional Vocational Training Campus',
+    purpose: 'training_outreach',
+    purposeNotes: 'Transported 6 solar water filtration kits and donor evaluation documentation to field trainers.',
+    passengerOrCargo: '2 Technical Trainers + 6 Solar Kit Crates',
+    departureTime: new Date(Date.now() - 86400000 * 2).toISOString(),
+    arrivalTime: new Date(Date.now() - 86400000 * 2 + 1000 * 60 * 240).toISOString(),
+    status: 'completed',
+    fuelAddedLiters: 35,
+    fuelCost: 490,
+    tollFees: 20,
+    preTripInspectionPassed: true,
+    postTripConditionNotes: 'Vehicle returned in clean condition. Tire pressure and coolant checked.',
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    updatedAt: new Date(Date.now() - 86400000 * 2 + 1000 * 60 * 240).toISOString()
+  },
+  {
+    id: 'trip_102',
+    vehicleId: 'veh_02',
+    vehiclePlate: 'GE-1845-23',
+    vehicleName: 'Ford Transit 350 High-Roof Cargo Van',
+    driverId: 'user_driver_02',
+    driverName: 'Emmanuel Osei',
+    driverEmail: 'emmanuel.osei@tumierp.com',
+    startOdometer: 68310,
+    endOdometer: 68420,
+    distanceKm: 110,
+    startLocation: 'Tema Logistics Hub, Harbor Road',
+    destinationLocation: 'Spintex Wholesale Retail Center & Superstore',
+    purpose: 'inventory_transfer',
+    purposeNotes: 'Inter-branch stock transfer of organic shea butter soap boxes and textile products.',
+    passengerOrCargo: '40 Cartons of Retail Merchandise',
+    departureTime: new Date(Date.now() - 86400000 * 1).toISOString(),
+    arrivalTime: new Date(Date.now() - 86400000 * 1 + 1000 * 60 * 180).toISOString(),
+    status: 'completed',
+    fuelAddedLiters: 28,
+    fuelCost: 392,
+    tollFees: 15,
+    preTripInspectionPassed: true,
+    postTripConditionNotes: 'Smooth transit, all seal locks verified by warehouse receiving officer.',
+    createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+    updatedAt: new Date(Date.now() - 86400000 * 1 + 1000 * 60 * 180).toISOString()
+  }
+];
+
+export const DEFAULT_VEHICLE_MAINTENANCE: VehicleMaintenance[] = [
+  {
+    id: 'maint_01',
+    vehicleId: 'veh_01',
+    vehiclePlate: 'GW-4920-24',
+    vehicleName: 'Toyota Hilux 4x4 Double Cabin (Logistics-1)',
+    serviceType: 'routine_scheduled',
+    title: '40,000 KM Major Preventive Service',
+    serviceProvider: 'Toyota Ghana Company Ltd (Accra Branch)',
+    contactPhone: '+233 30 222 1316',
+    scheduledDate: '2026-09-15',
+    completedDate: '2026-09-16',
+    odometerAtService: 40120,
+    nextServiceDueOdometer: 50000,
+    nextServiceDueDate: '2027-03-15',
+    cost: 1850,
+    currency: 'GHS',
+    partsReplaced: ['Engine Oil (Synthetic)', 'Oil Filter', 'Fuel Filter', 'Cabin Air Filter', 'Front Brake Pads'],
+    invoiceNumber: 'INV-TGL-89124',
+    notes: 'Full multi-point chassis and suspension inspection completed. Wheel alignment calibrated.',
+    status: 'completed',
+    technicianNotes: 'Vehicle running smoothly. Next brake disc check recommended at 50,000 km.',
+    createdAt: '2026-09-15T08:00:00Z',
+    updatedAt: '2026-09-16T17:00:00Z'
+  },
+  {
+    id: 'maint_02',
+    vehicleId: 'veh_03',
+    vehiclePlate: 'GS-7729-22',
+    vehicleName: 'Hyundai H-100 Heavy Flatbed Utility',
+    serviceType: 'engine_transmission',
+    title: 'Clutch Assembly Replacement & Heavy Brake Service',
+    serviceProvider: 'AutoCare Mechanical Works, Kaneshie',
+    contactPhone: '+233 24 491 8820',
+    scheduledDate: '2026-11-01',
+    odometerAtService: 91300,
+    nextServiceDueOdometer: 100000,
+    nextServiceDueDate: '2027-05-01',
+    cost: 3200,
+    currency: 'GHS',
+    partsReplaced: ['Clutch Plate & Pressure Plate', 'Release Bearing', 'Brake Shoes Rear', 'Gearbox Oil'],
+    invoiceNumber: 'AC-2026-1102',
+    notes: 'Parts sourced through registered procurement vendor. Technician completing road tests.',
+    status: 'in_progress',
+    technicianNotes: 'Gearbox refitted. Testing clutch engagement and handbrake tension.',
+    createdAt: '2026-11-01T09:00:00Z',
+    updatedAt: '2026-11-03T10:00:00Z'
+  },
+  {
+    id: 'maint_03',
+    vehicleId: 'veh_02',
+    vehiclePlate: 'GE-1845-23',
+    vehicleName: 'Ford Transit 350 High-Roof Cargo Van',
+    serviceType: 'routine_scheduled',
+    title: '70,000 KM Preventive Maintenance & Tire Rotation',
+    serviceProvider: 'Mechanical Alliance Workshop, Tema',
+    contactPhone: '+233 30 330 4412',
+    scheduledDate: '2026-11-25',
+    odometerAtService: 68420,
+    nextServiceDueOdometer: 80000,
+    nextServiceDueDate: '2027-05-25',
+    cost: 2100,
+    currency: 'GHS',
+    status: 'scheduled',
+    notes: 'Routine service booking made in advance. Filter kits reserved in warehouse inventory.',
+    createdAt: '2026-11-02T14:00:00Z',
+    updatedAt: '2026-11-02T14:00:00Z'
+  }
+];
+
+export const DEFAULT_VEHICLE_EXPENSES: VehicleExpense[] = [
+  {
+    id: 'exp_veh_01',
+    vehicleId: 'veh_01',
+    vehiclePlate: 'GW-4920-24',
+    vehicleName: 'Toyota Hilux 4x4 Double Cabin (Logistics-1)',
+    driverId: 'user_driver_01',
+    driverName: 'Kofi Boateng (Fleet Driver)',
+    expenseCategory: 'fuel',
+    amount: 560,
+    currency: 'GHS',
+    date: new Date(Date.now() - 86400000 * 3).toISOString().split('T')[0],
+    odometer: 42680,
+    litersPurchased: 40,
+    fuelPricePerLiter: 14.00,
+    vendorOrStation: 'Shell Service Station, Airport City',
+    receiptNumber: 'SHL-291840',
+    paymentMethod: 'fleet_card',
+    approvalStatus: 'approved',
+    notes: 'Full tank top-up prior to field outreach departure.',
+    createdAt: new Date(Date.now() - 86400000 * 3).toISOString()
+  },
+  {
+    id: 'exp_veh_02',
+    vehicleId: 'veh_01',
+    vehiclePlate: 'GW-4920-24',
+    vehicleName: 'Toyota Hilux 4x4 Double Cabin (Logistics-1)',
+    driverId: 'user_driver_01',
+    driverName: 'Kofi Boateng (Fleet Driver)',
+    expenseCategory: 'toll',
+    amount: 30,
+    currency: 'GHS',
+    date: new Date(Date.now() - 86400000 * 2).toISOString().split('T')[0],
+    vendorOrStation: 'Tema Motorway Toll Plaza',
+    receiptNumber: 'TLL-99412',
+    paymentMethod: 'mobile_money',
+    approvalStatus: 'approved',
+    notes: 'Return expressway toll booth pass.',
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
+  },
+  {
+    id: 'exp_veh_03',
+    vehicleId: 'veh_02',
+    vehiclePlate: 'GE-1845-23',
+    vehicleName: 'Ford Transit 350 High-Roof Cargo Van',
+    driverId: 'user_driver_02',
+    driverName: 'Emmanuel Osei',
+    expenseCategory: 'fuel',
+    amount: 700,
+    currency: 'GHS',
+    date: new Date(Date.now() - 86400000 * 5).toISOString().split('T')[0],
+    odometer: 68100,
+    litersPurchased: 50,
+    fuelPricePerLiter: 14.00,
+    vendorOrStation: 'TotalEnergies Tema Harbor bypass',
+    receiptNumber: 'TOT-48192',
+    paymentMethod: 'fleet_card',
+    approvalStatus: 'approved',
+    notes: 'Procurement route diesel purchase.',
+    createdAt: new Date(Date.now() - 86400000 * 5).toISOString()
+  }
+];
+
+export const DEFAULT_VEHICLE_ISSUES: VehicleIssueReport[] = [
+  {
+    id: 'iss_01',
+    vehicleId: 'veh_02',
+    vehiclePlate: 'GE-1845-23',
+    vehicleName: 'Ford Transit 350 High-Roof Cargo Van',
+    driverId: 'user_driver_01',
+    driverName: 'Kofi Boateng (Fleet Driver)',
+    issueTitle: 'Left side indicator lamp bulb intermittent failure',
+    description: 'During morning pre-trip checklist, the left turn indicator flashed rapidly on the dashboard. Visual check showed front left bulb not illuminating intermittently.',
+    severity: 'medium',
+    odometerAtReport: 68350,
+    dateReported: new Date(Date.now() - 86400000 * 4).toISOString(),
+    status: 'resolved',
+    resolutionNotes: 'Bulb replaced by warehouse maintenance mechanic. Socket cleaned and tested.',
+    resolvedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+    createdAt: new Date(Date.now() - 86400000 * 4).toISOString()
+  }
+];
+
+export const DEFAULT_DRIVER_LICENSES: DriverLicense[] = [
+  {
+    id: 'lic_01',
+    driverId: 'user_driver_01',
+    driverName: 'Kofi Boateng (Fleet Driver)',
+    driverEmail: 'driver@tumierp.com',
+    licenseNumber: 'DL-GHA-8492019',
+    licenseClass: 'Class C (Commercial)',
+    issueDate: '2023-04-12',
+    expiryDate: '2026-11-26', // Within 30 days of Nov 3, 2026 -> reminder active!
+    issuingAuthority: 'DVLA - 37 Military Hospital Station, Accra',
+    bloodGroup: 'O+',
+    emergencyContact: 'Abena Boateng (Spouse)',
+    emergencyPhone: '+233 24 555 1290',
+    notes: 'Certified for commercial pickups, delivery vans, and light cargo trucks. Clean driving record.',
+    status: 'expiring_soon',
+    reminderActive: true,
+    verifiedBy: 'Samuel Mensah (Fleet Mgr)',
+    verifiedAt: '2026-01-10T08:00:00Z',
+    createdAt: '2023-04-12T09:00:00Z',
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'lic_02',
+    driverId: 'user_driver_02',
+    driverName: 'Emmanuel Osei',
+    driverEmail: 'emmanuel.osei@tumierp.com',
+    licenseNumber: 'DL-GHA-4419208',
+    licenseClass: 'Class D (Heavy Goods)',
+    issueDate: '2024-06-15',
+    expiryDate: '2028-06-14',
+    issuingAuthority: 'DVLA - Tema Regional Office',
+    bloodGroup: 'A+',
+    emergencyContact: 'Grace Osei (Sister)',
+    emergencyPhone: '+233 20 888 4431',
+    notes: 'Heavy duty articulated freight and flatbed vehicle license. Inspected by fleet manager.',
+    status: 'valid',
+    reminderActive: false,
+    verifiedBy: 'Samuel Mensah (Fleet Mgr)',
+    verifiedAt: '2026-06-15T10:00:00Z',
+    createdAt: '2024-06-15T09:00:00Z',
+    updatedAt: new Date().toISOString()
+  }
+];
 
 export const DEFAULT_PROJECT_BUDGETS: ProjectBudget[] = [
   {
@@ -2560,8 +2997,262 @@ export const dataStore = {
     return newRun;
   },
 
+  // Complete Fleet & Vehicle Management Services
+  getVehicles: () => loadLocalStore<Vehicle>(STORAGE_KEYS.VEHICLES, DEFAULT_VEHICLES),
+  saveVehicles: (vehicles: Vehicle[]) => {
+    saveLocalStore(STORAGE_KEYS.VEHICLES, vehicles);
+  },
+  addVehicle: (veh: Omit<Vehicle, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const current = loadLocalStore<Vehicle>(STORAGE_KEYS.VEHICLES, DEFAULT_VEHICLES);
+    const newVehicle: Vehicle = {
+      ...veh,
+      id: 'veh_' + Date.now().toString(36) + '_' + Math.floor(Math.random() * 1000),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    const updated = [newVehicle, ...current];
+    saveLocalStore(STORAGE_KEYS.VEHICLES, updated);
+    return newVehicle;
+  },
+  updateVehicle: (id: string, updates: Partial<Vehicle>) => {
+    const current = loadLocalStore<Vehicle>(STORAGE_KEYS.VEHICLES, DEFAULT_VEHICLES);
+    const updated = current.map(v => v.id === id ? {
+      ...v,
+      ...updates,
+      updatedAt: new Date().toISOString()
+    } : v);
+    saveLocalStore(STORAGE_KEYS.VEHICLES, updated);
+  },
+  deleteVehicle: (id: string) => {
+    const current = loadLocalStore<Vehicle>(STORAGE_KEYS.VEHICLES, DEFAULT_VEHICLES);
+    const updated = current.filter(v => v.id !== id);
+    saveLocalStore(STORAGE_KEYS.VEHICLES, updated);
+  },
+
+  getVehicleTrips: () => loadLocalStore<VehicleTrip>(STORAGE_KEYS.VEHICLE_TRIPS, DEFAULT_VEHICLE_TRIPS),
+  saveVehicleTrips: (trips: VehicleTrip[]) => {
+    saveLocalStore(STORAGE_KEYS.VEHICLE_TRIPS, trips);
+  },
+  addVehicleTrip: (trip: Omit<VehicleTrip, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const currentTrips = loadLocalStore<VehicleTrip>(STORAGE_KEYS.VEHICLE_TRIPS, DEFAULT_VEHICLE_TRIPS);
+    const newTrip: VehicleTrip = {
+      ...trip,
+      id: 'trip_' + Date.now().toString(36) + '_' + Math.floor(Math.random() * 1000),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    const updatedTrips = [newTrip, ...currentTrips];
+    saveLocalStore(STORAGE_KEYS.VEHICLE_TRIPS, updatedTrips);
+
+    // If trip started, set vehicle status to 'on_trip' and update odometer if startOdometer is higher
+    if (newTrip.status === 'active') {
+      const vehicles = loadLocalStore<Vehicle>(STORAGE_KEYS.VEHICLES, DEFAULT_VEHICLES);
+      const updatedVehicles = vehicles.map(v => v.id === newTrip.vehicleId ? {
+        ...v,
+        status: 'on_trip' as const,
+        assignedDriverId: newTrip.driverId,
+        assignedDriverName: newTrip.driverName,
+        currentLocation: newTrip.startLocation,
+        currentOdometer: Math.max(v.currentOdometer, newTrip.startOdometer),
+        updatedAt: new Date().toISOString()
+      } : v);
+      saveLocalStore(STORAGE_KEYS.VEHICLES, updatedVehicles);
+    }
+    return newTrip;
+  },
+  completeVehicleTrip: (
+    tripId: string, 
+    endOdometer: number, 
+    destinationLocation: string, 
+    arrivalTime: string, 
+    postTripConditionNotes?: string,
+    fuelAddedLiters?: number,
+    fuelCost?: number,
+    tollFees?: number
+  ) => {
+    const currentTrips = loadLocalStore<VehicleTrip>(STORAGE_KEYS.VEHICLE_TRIPS, DEFAULT_VEHICLE_TRIPS);
+    let matchedVehicleId = '';
+    const updatedTrips = currentTrips.map(t => {
+      if (t.id === tripId) {
+        matchedVehicleId = t.vehicleId;
+        const distanceKm = Math.max(0, endOdometer - t.startOdometer);
+        return {
+          ...t,
+          endOdometer,
+          destinationLocation,
+          arrivalTime: arrivalTime || new Date().toISOString(),
+          distanceKm,
+          status: 'completed' as const,
+          postTripConditionNotes: postTripConditionNotes || t.postTripConditionNotes,
+          fuelAddedLiters: fuelAddedLiters ?? t.fuelAddedLiters,
+          fuelCost: fuelCost ?? t.fuelCost,
+          tollFees: tollFees ?? t.tollFees,
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return t;
+    });
+    saveLocalStore(STORAGE_KEYS.VEHICLE_TRIPS, updatedTrips);
+
+    // Update vehicle odometer and return status to 'available'
+    if (matchedVehicleId) {
+      const vehicles = loadLocalStore<Vehicle>(STORAGE_KEYS.VEHICLES, DEFAULT_VEHICLES);
+      const updatedVehicles = vehicles.map(v => v.id === matchedVehicleId ? {
+        ...v,
+        status: 'available' as const,
+        currentOdometer: Math.max(v.currentOdometer, endOdometer),
+        currentLocation: destinationLocation,
+        updatedAt: new Date().toISOString()
+      } : v);
+      saveLocalStore(STORAGE_KEYS.VEHICLES, updatedVehicles);
+    }
+  },
+  updateVehicleTrip: (id: string, updates: Partial<VehicleTrip>) => {
+    const current = loadLocalStore<VehicleTrip>(STORAGE_KEYS.VEHICLE_TRIPS, DEFAULT_VEHICLE_TRIPS);
+    const updated = current.map(t => t.id === id ? {
+      ...t,
+      ...updates,
+      updatedAt: new Date().toISOString()
+    } : t);
+    saveLocalStore(STORAGE_KEYS.VEHICLE_TRIPS, updated);
+  },
+
+  getVehicleMaintenance: () => loadLocalStore<VehicleMaintenance>(STORAGE_KEYS.VEHICLE_MAINTENANCE, DEFAULT_VEHICLE_MAINTENANCE),
+  saveVehicleMaintenance: (records: VehicleMaintenance[]) => {
+    saveLocalStore(STORAGE_KEYS.VEHICLE_MAINTENANCE, records);
+  },
+  addVehicleMaintenance: (rec: Omit<VehicleMaintenance, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const current = loadLocalStore<VehicleMaintenance>(STORAGE_KEYS.VEHICLE_MAINTENANCE, DEFAULT_VEHICLE_MAINTENANCE);
+    const newRecord: VehicleMaintenance = {
+      ...rec,
+      id: 'maint_' + Date.now().toString(36) + '_' + Math.floor(Math.random() * 1000),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    const updated = [newRecord, ...current];
+    saveLocalStore(STORAGE_KEYS.VEHICLE_MAINTENANCE, updated);
+
+    // If status is in_progress, mark vehicle in_service
+    if (newRecord.status === 'in_progress') {
+      const vehicles = loadLocalStore<Vehicle>(STORAGE_KEYS.VEHICLES, DEFAULT_VEHICLES);
+      const updatedVehicles = vehicles.map(v => v.id === newRecord.vehicleId ? {
+        ...v,
+        status: 'in_service' as const,
+        updatedAt: new Date().toISOString()
+      } : v);
+      saveLocalStore(STORAGE_KEYS.VEHICLES, updatedVehicles);
+    }
+    return newRecord;
+  },
+  updateVehicleMaintenance: (id: string, updates: Partial<VehicleMaintenance>) => {
+    const current = loadLocalStore<VehicleMaintenance>(STORAGE_KEYS.VEHICLE_MAINTENANCE, DEFAULT_VEHICLE_MAINTENANCE);
+    let matchedVehicleId = '';
+    let completedStatus = false;
+    const updated = current.map(m => {
+      if (m.id === id) {
+        matchedVehicleId = m.vehicleId;
+        if (updates.status === 'completed') completedStatus = true;
+        return {
+          ...m,
+          ...updates,
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return m;
+    });
+    saveLocalStore(STORAGE_KEYS.VEHICLE_MAINTENANCE, updated);
+
+    if (completedStatus && matchedVehicleId) {
+      const vehicles = loadLocalStore<Vehicle>(STORAGE_KEYS.VEHICLES, DEFAULT_VEHICLES);
+      const updatedVehicles = vehicles.map(v => v.id === matchedVehicleId ? {
+        ...v,
+        status: 'available' as const,
+        updatedAt: new Date().toISOString()
+      } : v);
+      saveLocalStore(STORAGE_KEYS.VEHICLES, updatedVehicles);
+    }
+  },
+
+  getVehicleExpenses: () => loadLocalStore<VehicleExpense>(STORAGE_KEYS.VEHICLE_EXPENSES, DEFAULT_VEHICLE_EXPENSES),
+  saveVehicleExpenses: (expenses: VehicleExpense[]) => {
+    saveLocalStore(STORAGE_KEYS.VEHICLE_EXPENSES, expenses);
+  },
+  addVehicleExpense: (expense: Omit<VehicleExpense, 'id' | 'createdAt'>) => {
+    const current = loadLocalStore<VehicleExpense>(STORAGE_KEYS.VEHICLE_EXPENSES, DEFAULT_VEHICLE_EXPENSES);
+    const newExpense: VehicleExpense = {
+      ...expense,
+      id: 'exp_veh_' + Date.now().toString(36) + '_' + Math.floor(Math.random() * 1000),
+      createdAt: new Date().toISOString()
+    };
+    const updated = [newExpense, ...current];
+    saveLocalStore(STORAGE_KEYS.VEHICLE_EXPENSES, updated);
+    return newExpense;
+  },
+  deleteVehicleExpense: (id: string) => {
+    const current = loadLocalStore<VehicleExpense>(STORAGE_KEYS.VEHICLE_EXPENSES, DEFAULT_VEHICLE_EXPENSES);
+    const updated = current.filter(e => e.id !== id);
+    saveLocalStore(STORAGE_KEYS.VEHICLE_EXPENSES, updated);
+  },
+
+  getVehicleIssues: () => loadLocalStore<VehicleIssueReport>(STORAGE_KEYS.VEHICLE_ISSUES, DEFAULT_VEHICLE_ISSUES),
+  saveVehicleIssues: (issues: VehicleIssueReport[]) => {
+    saveLocalStore(STORAGE_KEYS.VEHICLE_ISSUES, issues);
+  },
+  addVehicleIssue: (issue: Omit<VehicleIssueReport, 'id' | 'createdAt'>) => {
+    const current = loadLocalStore<VehicleIssueReport>(STORAGE_KEYS.VEHICLE_ISSUES, DEFAULT_VEHICLE_ISSUES);
+    const newIssue: VehicleIssueReport = {
+      ...issue,
+      id: 'iss_' + Date.now().toString(36) + '_' + Math.floor(Math.random() * 1000),
+      createdAt: new Date().toISOString()
+    };
+    const updated = [newIssue, ...current];
+    saveLocalStore(STORAGE_KEYS.VEHICLE_ISSUES, updated);
+    return newIssue;
+  },
+  updateVehicleIssueStatus: (id: string, status: VehicleIssueReport['status'], resolutionNotes?: string) => {
+    const current = loadLocalStore<VehicleIssueReport>(STORAGE_KEYS.VEHICLE_ISSUES, DEFAULT_VEHICLE_ISSUES);
+    const updated = current.map(i => i.id === id ? {
+      ...i,
+      status,
+      resolutionNotes: resolutionNotes || i.resolutionNotes,
+      resolvedAt: status === 'resolved' ? new Date().toISOString() : i.resolvedAt
+    } : i);
+    saveLocalStore(STORAGE_KEYS.VEHICLE_ISSUES, updated);
+  },
+
+  getDriverLicenses: () => loadLocalStore<DriverLicense>(STORAGE_KEYS.DRIVER_LICENSES, DEFAULT_DRIVER_LICENSES),
+  saveDriverLicenses: (licenses: DriverLicense[]) => {
+    saveLocalStore(STORAGE_KEYS.DRIVER_LICENSES, licenses);
+  },
+  addDriverLicense: (license: Omit<DriverLicense, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const current = loadLocalStore<DriverLicense>(STORAGE_KEYS.DRIVER_LICENSES, DEFAULT_DRIVER_LICENSES);
+    const newLicense: DriverLicense = {
+      ...license,
+      id: 'lic_' + Date.now().toString(36) + '_' + Math.floor(Math.random() * 1000),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    const updated = [newLicense, ...current];
+    saveLocalStore(STORAGE_KEYS.DRIVER_LICENSES, updated);
+    return newLicense;
+  },
+  updateDriverLicense: (id: string, updates: Partial<DriverLicense>) => {
+    const current = loadLocalStore<DriverLicense>(STORAGE_KEYS.DRIVER_LICENSES, DEFAULT_DRIVER_LICENSES);
+    const updated = current.map(lic => lic.id === id ? {
+      ...lic,
+      ...updates,
+      updatedAt: new Date().toISOString()
+    } : lic);
+    saveLocalStore(STORAGE_KEYS.DRIVER_LICENSES, updated);
+  },
+  deleteDriverLicense: (id: string) => {
+    const current = loadLocalStore<DriverLicense>(STORAGE_KEYS.DRIVER_LICENSES, DEFAULT_DRIVER_LICENSES);
+    const updated = current.filter(lic => lic.id !== id);
+    saveLocalStore(STORAGE_KEYS.DRIVER_LICENSES, updated);
+  },
+
   // Listeners that simulate real-time onSnapshot triggers
-  subscribeToCollection: (collectionName: 'users' | 'products' | 'inventory' | 'customers' | 'opportunities' | 'orders' | 'offline_queue' | 'purchase_orders' | 'customer_logs' | 'vendors' | 'warehouses' | 'double_entry' | 'audit_trail' | 'petty_cash_alloc' | 'petty_cash_exp' | 'time_cards', callback: CallbackFn) => {
+  subscribeToCollection: (collectionName: 'users' | 'products' | 'inventory' | 'customers' | 'opportunities' | 'orders' | 'offline_queue' | 'purchase_orders' | 'customer_logs' | 'vendors' | 'warehouses' | 'double_entry' | 'audit_trail' | 'petty_cash_alloc' | 'petty_cash_exp' | 'time_cards' | 'vehicles' | 'vehicle_trips' | 'vehicle_maintenance' | 'vehicle_expenses' | 'vehicle_issues' | 'driver_licenses', callback: CallbackFn) => {
     let key = '';
     switch (collectionName) {
       case 'users': key = STORAGE_KEYS.USERS; break;
@@ -2580,6 +3271,12 @@ export const dataStore = {
       case 'petty_cash_alloc': key = STORAGE_KEYS.PETTY_CASH_ALLOC; break;
       case 'petty_cash_exp': key = STORAGE_KEYS.PETTY_CASH_EXP; break;
       case 'time_cards': key = STORAGE_KEYS.TIME_CARDS; break;
+      case 'vehicles': key = STORAGE_KEYS.VEHICLES; break;
+      case 'vehicle_trips': key = STORAGE_KEYS.VEHICLE_TRIPS; break;
+      case 'vehicle_maintenance': key = STORAGE_KEYS.VEHICLE_MAINTENANCE; break;
+      case 'vehicle_expenses': key = STORAGE_KEYS.VEHICLE_EXPENSES; break;
+      case 'vehicle_issues': key = STORAGE_KEYS.VEHICLE_ISSUES; break;
+      case 'driver_licenses': key = STORAGE_KEYS.DRIVER_LICENSES; break;
     }
     return subscribeToKey(key, callback);
   }

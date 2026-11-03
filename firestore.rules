@@ -47,6 +47,10 @@ service cloud.firestore {
       return isTenant(orgId) && (getUserRole() == 'warehouse' || getUserRole() == 'ceo' || getUserRole() == 'manager' || getUserRole() == 'sysadmin');
     }
 
+    function isDriver(orgId) {
+      return isTenant(orgId) && (getUserRole() == 'driver' || getUserRole() == 'ceo' || getUserRole() == 'manager');
+    }
+
     // Validate if an ID is safe and within size boundaries to prevent value poisoning
     function isValidId(id) {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
@@ -65,97 +69,86 @@ service cloud.firestore {
     // TOP-LEVEL ORGANIZATIONS COLLECTION
     // ==========================================
     match /organizations/{orgId} {
-      allow read: if isAuthenticated();
-      allow create, update, write: if isAuthenticated();
+      allow read, write: if isAuthenticated();
+
+      // Subcollections under Organization
+      match /opportunities/{opportunityId} {
+        allow get, list: if isTenant(orgId) && isValidId(opportunityId);
+        allow create: if (isManager(orgId) || isSales(orgId)) && isValidId(opportunityId);
+        allow update: if (isManager(orgId) || (
+          isSales(orgId) && 
+          request.resource.data.kanban_stage != 'Closed' &&
+          resource.data.kanban_stage != 'Closed'
+        )) && isValidId(opportunityId);
+        allow delete: if isManager(orgId) && isValidId(opportunityId);
+      }
+
+      match /pos_orders/{orderId} {
+        allow get, list: if (isManager(orgId) || isCashier(orgId)) && isValidId(orderId);
+        allow create: if (isManager(orgId) || isCashier(orgId)) && isValidId(orderId);
+        allow update, delete: if isManager(orgId) && isValidId(orderId);
+      }
+
+      match /products/{productId} {
+        allow get, list: if isTenant(orgId) && isValidId(productId);
+        allow write: if isWarehouse(orgId) && isValidId(productId);
+      }
+
+      match /inventory_levels/{productId} {
+        allow get, list: if isTenant(orgId) && isValidId(productId);
+        allow write: if isWarehouse(orgId) && isValidId(productId);
+      }
+
+      match /users/{userId} {
+        allow get: if isTenant(orgId) && (request.auth.uid == userId || isManager(orgId)) && isValidId(userId);
+        allow list: if isTenant(orgId);
+        allow write: if isManager(orgId) && isValidId(userId);
+      }
+
+      match /manuals/{manualId} {
+        allow read: if isTenant(orgId) && isValidId(manualId);
+        allow write: if isManager(orgId) && isValidId(manualId);
+      }
     }
 
     // ==========================================
     // TOP-LEVEL AUDIT LOGS
     // ==========================================
     match /audit_logs/{logId} {
-      allow read, create: if isAuthenticated();
+      allow read, create: if isAuthenticated() && isValidId(logId);
     }
-      
-      allow get: if isTenant(orgId) && isValidId(orgId);
-      allow write: if isManager(orgId) && isValidId(orgId);
 
-      // ==========================================
-      // CRM MODULE (Opportunities)
-      // ==========================================
-      match /opportunities/{opportunityId} {
-        // Validate the document ID path parameter
-        allow get: if (isManager(orgId) || isSales(orgId)) && isValidId(opportunityId);
-        
-        // Allow query-scoped collection listing
-        allow list: if isManager(orgId) || isSales(orgId);
-        
-        // Sales and Managers can create new opportunities
-        allow create: if (isManager(orgId) || isSales(orgId)) && isValidId(opportunityId);
-        
-        // RBAC Constraint: Only managers can move to 'Closed'
-        // Sales cannot change stage to 'Closed', nor can they modify a deal that is already 'Closed'
-        allow update: if (isManager(orgId) || (
-          isSales(orgId) && 
-          request.resource.data.kanban_stage != 'Closed' &&
-          resource.data.kanban_stage != 'Closed'
-        )) && isValidId(opportunityId);
-        
-        // Only managers can delete opportunities
-        allow delete: if isManager(orgId) && isValidId(opportunityId);
-      }
+    // ==========================================
+    // FLEET & VEHICLE LOGISTICS COLLECTIONS
+    // ==========================================
+    match /vehicles/{vehicleId} {
+      allow read: if isAuthenticated() && isValidId(vehicleId);
+      allow write: if isAuthenticated() && isValidId(vehicleId);
+    }
 
-      // ==========================================
-      // POS MODULE (Orders)
-      // ==========================================
-      match /pos_orders/{orderId} {
-        // Cashiers and Managers can view receipts
-        allow get: if (isManager(orgId) || isCashier(orgId)) && isValidId(orderId);
-        
-        // Allow list reads for Cashiers/Managers
-        allow list: if isManager(orgId) || isCashier(orgId);
-        
-        // Cashiers can process new sales (create documents)
-        allow create: if (isManager(orgId) || isCashier(orgId)) && isValidId(orderId);
-        
-        // RBAC Constraint: Once a receipt is created, cashiers cannot edit or void it
-        // Only managers have update/delete permissions for fraud prevention
-        allow update, delete: if isManager(orgId) && isValidId(orderId);
-      }
+    match /vehicle_trips/{tripId} {
+      allow read: if isAuthenticated() && isValidId(tripId);
+      allow write: if isAuthenticated() && isValidId(tripId);
+    }
 
-      // ==========================================
-      // INVENTORY (Read-Only for Staff, Write for Managers & Warehouse)
-      // ==========================================
-      match /products/{productId} {
-        allow get: if isTenant(orgId) && isValidId(productId);
-        allow list: if isTenant(orgId);
-        allow write: if isWarehouse(orgId) && isValidId(productId);
-      }
+    match /vehicle_maintenance/{maintenanceId} {
+      allow read: if isAuthenticated() && isValidId(maintenanceId);
+      allow write: if isAuthenticated() && isValidId(maintenanceId);
+    }
 
-      match /inventory_levels/{productId} {
-        allow get: if isTenant(orgId) && isValidId(productId);
-        allow list: if isTenant(orgId);
-        allow write: if isWarehouse(orgId) && isValidId(productId);
-      }
+    match /vehicle_expenses/{expenseId} {
+      allow read: if isAuthenticated() && isValidId(expenseId);
+      allow write: if isAuthenticated() && isValidId(expenseId);
+    }
 
-      // ==========================================
-      // USER PROFILES & HR MODULE
-      // ==========================================
-      match /users/{userId} {
-        // Users can read their own profile, managers can read all
-        allow get: if isTenant(orgId) && (request.auth.uid == userId || isManager(orgId)) && isValidId(userId);
-        allow list: if isTenant(orgId);
-        
-        // Only managers can assign roles or update AI scores
-        allow write: if isManager(orgId) && isValidId(userId);
-      }
+    match /vehicle_issues/{issueId} {
+      allow read: if isAuthenticated() && isValidId(issueId);
+      allow write: if isAuthenticated() && isValidId(issueId);
+    }
 
-      // ==========================================
-      // COMPANY KNOWLEDGE MANUALS (RAG Context)
-      // ==========================================
-      match /manuals/{manualId} {
-        allow read: if isTenant(orgId) && isValidId(manualId);
-        allow write: if isManager(orgId) && isValidId(manualId);
-      }
+    match /driver_licenses/{licenseId} {
+      allow read: if isAuthenticated() && isValidId(licenseId);
+      allow write: if isAuthenticated() && isValidId(licenseId);
     }
   }
 }

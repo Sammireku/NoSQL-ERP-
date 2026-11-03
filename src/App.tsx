@@ -35,10 +35,14 @@ import {
   Puzzle,
   Wrench,
   Sliders,
-  Search
+  Search,
+  Compass,
+  Car
 } from 'lucide-react';
 import { UserProfile, ERPModuleConfig, UserRole } from './types/erp';
 import { dataStore } from './config/firebase';
+import FleetManagement from './components/FleetManagement';
+import DriverTripLogger from './components/DriverTripLogger';
 import POSCart from './components/POSCart';
 import KanbanBoard from './components/KanbanBoard';
 import CRMProfiles from './components/CRMProfiles';
@@ -108,6 +112,8 @@ export type TabId =
   | 'stock_takes'
   | 'certificates'
   | 'maintenance'
+  | 'fleet'
+  | 'driver_portal'
   | 'enterprise_customizer';
 
 
@@ -241,6 +247,20 @@ const ALL_NAV_ITEMS: NavigationDefinition[] = [
     label: 'Maintenance & Renewals',
     icon: Wrench,
     allowedRoles: ['ceo', 'manager', 'sysadmin', 'receptionist', 'housekeeping', 'maintenance'],
+    category: 'Operations'
+  },
+  {
+    id: 'fleet',
+    label: 'Fleet & Vehicles',
+    icon: Truck,
+    allowedRoles: ['manager', 'ceo', 'warehouse', 'maintenance', 'accountant', 'sysadmin', 'driver'],
+    category: 'Operations'
+  },
+  {
+    id: 'driver_portal',
+    label: 'Driver Trip Logger',
+    icon: Compass,
+    allowedRoles: ['driver', 'manager', 'ceo', 'warehouse', 'sales'],
     category: 'Operations'
   },
 
@@ -1025,6 +1045,26 @@ export default function App() {
             {activeTab === 'maintenance' && (
               <ProtectedRoute allowedRoles={['ceo', 'manager', 'sysadmin', 'receptionist', 'housekeeping', 'maintenance']} userRole={activeUser.role} componentName="Maintenance & Compliance">
                 <MaintenanceDashboard activeUser={activeUser} />
+              </ProtectedRoute>
+            )}
+
+            {/* Fleet & Vehicles Management */}
+            {activeTab === 'fleet' && (
+              <ProtectedRoute allowedRoles={['manager', 'ceo', 'warehouse', 'maintenance', 'accountant', 'sysadmin', 'driver']} userRole={activeUser.role} componentName="Fleet & Vehicles Management">
+                <FleetManagement 
+                  activeUser={activeUser} 
+                  onNavigateToDriverPortal={() => setActiveTab('driver_portal')} 
+                />
+              </ProtectedRoute>
+            )}
+
+            {/* Driver Trip & Mileage Logger */}
+            {activeTab === 'driver_portal' && (
+              <ProtectedRoute allowedRoles={['driver', 'manager', 'ceo', 'warehouse', 'sales']} userRole={activeUser.role} componentName="Driver Trip & Mileage Logger">
+                <DriverTripLogger 
+                  activeUser={activeUser} 
+                  onNavigateToFleet={() => setActiveTab('fleet')} 
+                />
               </ProtectedRoute>
             )}
           </motion.div>

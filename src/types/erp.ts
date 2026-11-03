@@ -4,7 +4,7 @@
  */
 
 // 1. users (Collection) - HR & Role Profiles
-export type UserRole = 'ceo' | 'sysadmin' | 'manager' | 'sales' | 'cashier' | 'warehouse' | 'auditor' | 'receptionist' | 'housekeeping' | 'maintenance' | 'accountant';
+export type UserRole = 'ceo' | 'sysadmin' | 'manager' | 'sales' | 'cashier' | 'warehouse' | 'auditor' | 'receptionist' | 'housekeeping' | 'maintenance' | 'accountant' | 'driver';
 
 export interface UserProfile {
   uid: string; // Document ID
@@ -331,7 +331,9 @@ export type ERPModuleId =
   | 'hospitality'
   | 'tasks'
   | 'messaging'
-  | 'mobile_app';
+  | 'mobile_app'
+  | 'fleet'
+  | 'driver_portal';
 
 export interface ERPModuleConfig {
   id: ERPModuleId;
@@ -1102,6 +1104,224 @@ export interface CapturedDonorRecord {
   receiptNumber: string;
   syncStatus: 'captured' | 'synced_to_crm' | 'exported';
   databaseSource: 'External Web Capture Database';
+}
+
+// ==========================================
+// 26. FLEET & VEHICLE MANAGEMENT
+// ==========================================
+
+export interface Vehicle {
+  id: string;
+  name: string;
+  plateNumber: string;
+  vin?: string;
+  make: string;
+  model: string;
+  year: number;
+  vehicleType: 'pickup' | 'van' | 'truck' | 'suv' | 'sedan' | 'bus' | 'motorcycle';
+  fuelType: 'diesel' | 'petrol' | 'hybrid' | 'electric';
+  transmission: 'automatic' | 'manual';
+  tankCapacityLiters: number;
+  currentOdometer: number; // in km
+  status: 'available' | 'on_trip' | 'in_service' | 'grounded' | 'decommissioned';
+  assignedDriverId?: string;
+  assignedDriverName?: string;
+  department: string;
+  currentLocation: string;
+  fuelLevelPercent: number; // 0-100%
+  insurancePolicyNo?: string;
+  insuranceProvider?: string;
+  insuranceIssueDate?: string;
+  insuranceExpiryDate?: string;
+  insuranceDocUrl?: string;
+  roadworthinessIssueDate?: string;
+  roadworthinessExpiryDate?: string;
+  roadworthinessDocUrl?: string;
+  roadFundExpiryDate?: string;
+  lastServicedDate?: string;
+  nextServiceDueDate?: string;
+  nextServiceDueOdometer?: number;
+  purchaseDate?: string;
+  purchaseCost?: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type TripPurpose = 
+  | 'client_delivery'
+  | 'inventory_transfer'
+  | 'procurement_run'
+  | 'executive_transport'
+  | 'hospitality_guest_shuttle'
+  | 'field_maintenance'
+  | 'training_outreach'
+  | 'other';
+
+export interface VehicleTrip {
+  id: string;
+  vehicleId: string;
+  vehiclePlate: string;
+  vehicleName: string;
+  driverId: string;
+  driverName: string;
+  driverEmail?: string;
+  startOdometer: number;
+  endOdometer?: number;
+  distanceKm?: number;
+  startLocation: string;
+  destinationLocation: string;
+  purpose: TripPurpose;
+  purposeNotes: string;
+  passengerOrCargo?: string;
+  departureTime: string;
+  arrivalTime?: string;
+  status: 'active' | 'completed' | 'cancelled';
+  fuelAddedLiters?: number;
+  fuelCost?: number;
+  tollFees?: number;
+  preTripInspectionPassed: boolean;
+  postTripConditionNotes?: string;
+  clientOrOrderRef?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VehicleMaintenance {
+  id: string;
+  vehicleId: string;
+  vehiclePlate: string;
+  vehicleName: string;
+  serviceType: 
+    | 'routine_scheduled'
+    | 'oil_and_filters'
+    | 'brake_service'
+    | 'tire_replacement'
+    | 'engine_transmission'
+    | 'electrical_battery'
+    | 'body_suspension'
+    | 'emergency_breakdown'
+    | 'statutory_inspection';
+  title: string;
+  serviceProvider: string;
+  contactPhone?: string;
+  scheduledDate: string;
+  completedDate?: string;
+  odometerAtService: number;
+  nextServiceDueOdometer?: number;
+  nextServiceDueDate?: string;
+  cost: number;
+  currency: string;
+  partsReplaced?: string[];
+  invoiceNumber?: string;
+  notes?: string;
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  technicianNotes?: string;
+  // Joint Driver-Mechanic Servicing Sign-Off Fields
+  driverId?: string;
+  driverName?: string;
+  driverSignature?: string; // Base64 data URI of driver's digital signature
+  driverSignedAt?: string;
+  mechanicName?: string;
+  mechanicPhone?: string;
+  mechanicWorkshopName?: string;
+  mechanicSignature?: string; // Base64 data URI of mechanic's digital signature
+  mechanicSignedAt?: string;
+  issueFixed?: string; // What issue was fixed / addressed
+  servicingChecklist?: string[]; // e.g. ['Engine Oil & Filter Change', 'Brake Overhaul', 'Wheel Alignment']
+  oilBrandAndGrade?: string; // e.g. '5W-30 Full Synthetic' or '15W-40 Diesel Heavy'
+  oilVolumeLiters?: number;
+  oilFilterReplaced?: boolean;
+  serviceCertificatePdfUri?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VehicleExpense {
+  id: string;
+  vehicleId: string;
+  vehiclePlate: string;
+  vehicleName: string;
+  driverId?: string;
+  driverName?: string;
+  expenseCategory: 
+    | 'fuel'
+    | 'toll'
+    | 'maintenance_minor'
+    | 'insurance_renewal'
+    | 'roadworthiness_fees'
+    | 'parking'
+    | 'car_wash'
+    | 'fines_permits'
+    | 'spare_parts';
+  amount: number;
+  currency: string;
+  date: string;
+  odometer?: number;
+  litersPurchased?: number;
+  fuelPricePerLiter?: number;
+  vendorOrStation: string;
+  receiptNumber?: string;
+  paymentMethod: 'fleet_card' | 'petty_cash' | 'mobile_money' | 'cash' | 'company_card';
+  approvalStatus: 'approved' | 'pending' | 'rejected';
+  notes?: string;
+  linkedTripId?: string;
+  createdAt: string;
+}
+
+export interface VehicleIssueReport {
+  id: string;
+  vehicleId: string;
+  vehiclePlate: string;
+  vehicleName: string;
+  driverId: string;
+  driverName: string;
+  issueTitle: string;
+  description: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  odometerAtReport: number;
+  dateReported: string;
+  status: 'open' | 'under_review' | 'scheduled_for_repair' | 'resolved';
+  resolutionNotes?: string;
+  resolvedAt?: string;
+  createdAt: string;
+}
+
+export interface DriverLicense {
+  id: string;
+  driverId: string;
+  driverName: string;
+  driverEmail?: string;
+  licenseNumber: string;
+  licenseClass: 'Class B (Private/Light)' | 'Class C (Commercial)' | 'Class D (Heavy Goods)' | 'Class F (Articulated)' | 'Motorcycle' | string;
+  issueDate: string; // YYYY-MM-DD
+  expiryDate: string; // YYYY-MM-DD
+  issuingAuthority: string; // e.g. DVLA Ghana
+  frontImageUrl?: string;
+  backImageUrl?: string;
+  bloodGroup?: string;
+  emergencyContact?: string;
+  emergencyPhone?: string;
+  notes?: string;
+  status: 'valid' | 'expiring_soon' | 'expired';
+  reminderActive?: boolean; // True if <= 30 days before expiry or expired
+  verifiedBy?: string;
+  verifiedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ComplianceDocumentScanResult {
+  detectedType: 'roadworthiness' | 'insurance' | 'license' | 'other';
+  plateNumber?: string;
+  policyOrCertNumber?: string;
+  providerOrAuthority?: string;
+  issueDate?: string;
+  expiryDate?: string;
+  driverName?: string;
+  licenseClass?: string;
+  documentSummary?: string;
+  confidenceScore?: number;
 }
 
 
